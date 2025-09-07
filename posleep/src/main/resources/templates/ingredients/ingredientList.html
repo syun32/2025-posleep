@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>식재료</title>
+    <style>
+        body{text-align: center}
+        table{border-collapse: collapse; width: 400px; margin: auto}
+        th,td{border: 1px solid #ddd; padding: 6px}
+        th{background: #adabab}
+        .msg{color: green}
+        input[type=number]{width: 60px}
+        input[readonly]{
+            background: #f2f4f7;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+<h2>식재료</h2>
+
+<form th:action="@{/ingredients/update}" method="post" th:object="${form}">
+    <table>
+        <thead>
+        <tr>
+            <th style="width: 20px;">No.</th>
+            <th style="width: 60px;">등록여부</th>
+            <th style="width: 170px;">식재료명</th>
+            <th style="width: 100px;">보유수량</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="ingredient, stat : ${ingredients}">
+            <td>
+                <input type="hidden" th:field="*{rows[__${stat.index}__].id}"/>
+                <span th:text="${ingredient.id}"></span>
+            </td>
+
+            <td>
+                <select th:field="*{rows[__${stat.index}__].isRegistered}">
+                    <option th:each="opt : ${YesNo}" th:value="${opt}" th:text="${opt}"></option>
+                </select>
+            </td>
+
+            <td th:text="${ingredient.name}"></td>
+
+            <td>
+                <input type="number" min="0"
+                       th:field="*{rows[__${stat.index}__].quantity}"
+                       th:attr="readonly=${ingredient.isRegistered.name() == 'N'}"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <button type="submit">저장</button>
+        <p class="msg" th:if="${msg}" th:text="${msg}"></p>
+    </div>
+</form>
+
+</body>
+</html>
