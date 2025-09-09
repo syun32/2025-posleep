@@ -15,14 +15,14 @@ public class IngredientEditRow {
     private String name;
 
     @NotNull
-    private Ingredient.YesNo isRegistered;
+    private boolean isRegistered;
 
     @NotNull
     @Min(0)
     private Integer quantity;
 
     public IngredientEditRow() {}
-    public IngredientEditRow (Integer id, String name, Ingredient.YesNo isRegistered, Integer quantity) {
+    public IngredientEditRow (Integer id, String name, boolean isRegistered, Integer quantity) {
         this.id = id;
         this.name = name;
         this.isRegistered = isRegistered;
@@ -47,11 +47,11 @@ public class IngredientEditRow {
         this.name = name;
     }
 
-    public Ingredient.YesNo getIsRegistered() {
+    public boolean getIsRegistered() {
         return isRegistered;
     }
 
-    public void setIsRegistered(Ingredient.YesNo isRegistered) {
+    public void setIsRegistered(boolean isRegistered) {
         this.isRegistered = isRegistered;
     }
 

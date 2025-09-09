@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
     <title>식재료</title>
@@ -37,10 +37,9 @@
                 <span th:text="${ingredient.id}"></span>
             </td>
 
-            <td>
-                <select th:field="*{rows[__${stat.index}__].isRegistered}">
-                    <option th:each="opt : ${YesNo}" th:value="${opt}" th:text="${opt}"></option>
-                </select>
+            <td style="text-align: center">
+                <input type="checkbox" class="chk"
+                       th:field="*{rows[__${stat.index}__].isRegistered}"/>
             </td>
 
             <td th:text="${ingredient.name}"></td>
@@ -48,7 +47,7 @@
             <td>
                 <input type="number" min="0"
                        th:field="*{rows[__${stat.index}__].quantity}"
-                       th:attr="readonly=${ingredient.isRegistered.name() == 'N'}"/>
+                       th:attr="readonly=${!ingredient.isRegistered}"/>
             </td>
         </tr>
         </tbody>

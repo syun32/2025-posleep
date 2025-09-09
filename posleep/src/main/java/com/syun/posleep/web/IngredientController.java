@@ -5,6 +5,7 @@ import com.syun.posleep.dto.IngredientEditRow;
 import com.syun.posleep.dto.IngredientForm;
 import com.syun.posleep.service.IngredientService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@Slf4j
 @Controller
 @RequestMapping("/ingredients")
 public class IngredientController {
@@ -24,6 +26,8 @@ public class IngredientController {
 
     @GetMapping
     public String managePage(Model model) {
+        log.info("[GET] /ingredients : Request Recieved");
+
         var list = svc.listAllOrdered();
 
         IngredientForm form = new IngredientForm();
@@ -38,8 +42,9 @@ public class IngredientController {
 
         model.addAttribute("ingredients", list);
         model.addAttribute("form", form);
-        model.addAttribute("YesNo", Ingredient.YesNo.values());
-        return "ingredients/ingredientList";
+
+        log.info("[GET] /ingredients : Response Success");
+        return "ingredientList";
     }
 
     @PostMapping("/update")
@@ -47,13 +52,16 @@ public class IngredientController {
                              BindingResult br,
                              RedirectAttributes ra,
                              Model model) {
+        log.info("[POST] /ingredients/update : Request Recieved");
+
         if (br.hasErrors()) {
             model.addAttribute("ingredients", svc.listAllOrdered());
-            model.addAttribute("YesNo", Ingredient.YesNo.values());
-            return "ingredients/ingredientList";
+            return "ingredientList";
         }
         svc.update(form);
         ra.addFlashAttribute("msg", "저장되었습니다.");
+
+        log.info("[POST] /ingredients/update : Response Success");
         return "redirect:/ingredients";
     }
 }

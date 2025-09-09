@@ -5,6 +5,7 @@ import com.syun.posleep.dto.IngredientEditRow;
 import com.syun.posleep.dto.IngredientForm;
 import com.syun.posleep.repository.IngredientRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class IngredientService {
     private final IngredientRepository repo;
@@ -22,11 +24,15 @@ public class IngredientService {
 
     @Transactional(readOnly = true)
     public List<Ingredient> listAllOrdered() {
-        return repo.findAllByOrderByIdAsc();
+        log.info("[IngredientService] listAllOrdered Start");
+        List<Ingredient> result = repo.findAllByOrderByIdAsc();
+        log.info("[IngredientService] listAllOrdered Success ({}건 조회)", result.size());
+        return result;
     }
 
     @Transactional
     public void update(IngredientForm form) {
+        log.info("[IngredientService] update Start");
         if (form.getRows() == null || form.getRows().isEmpty()) return;
 
         var ids = form.getRows().stream().map(IngredientEditRow::getId).toList();
@@ -41,5 +47,6 @@ public class IngredientService {
             e.setIsRegistered(r.getIsRegistered());
             e.setQuantity(r.getQuantity());
         }
+        log.info("[IngredientService] update Success");
     }
 }

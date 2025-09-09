@@ -22,9 +22,8 @@ public class Ingredient {
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "is_registered", nullable = false, length = 1)
-    private YesNo isRegistered = YesNo.N;
+    @Column(name = "is_registered", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean isRegistered = false;
 
     @Min(0)
     @Column(name = "quantity", nullable = false)
@@ -32,7 +31,7 @@ public class Ingredient {
 
     protected Ingredient() {}
 
-    public Ingredient(String name, YesNo isRegistered, Integer quantity) {
+    public Ingredient(String name, boolean isRegistered, Integer quantity) {
         this.name = name;
         this.isRegistered = isRegistered;
         this.quantity = quantity;
@@ -47,7 +46,7 @@ public class Ingredient {
         return name;
     }
 
-    public YesNo getIsRegistered() {
+    public boolean getIsRegistered() {
         return isRegistered;
     }
 
@@ -59,7 +58,7 @@ public class Ingredient {
         this.name = name;
     }
 
-    public void setIsRegistered(YesNo isRegistered) {
+    public void setIsRegistered(boolean isRegistered) {
         this.isRegistered = isRegistered;
     }
 
@@ -83,6 +82,4 @@ public class Ingredient {
                 ", quantity=" + quantity +
                 '}';
     }
-
-    public enum YesNo { Y, N }
 }
