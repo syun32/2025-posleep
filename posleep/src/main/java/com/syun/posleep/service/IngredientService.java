@@ -24,29 +24,30 @@ public class IngredientService {
 
     @Transactional(readOnly = true)
     public List<Ingredient> listAllOrdered() {
-        log.info("[IngredientService] listAllOrdered Start");
         List<Ingredient> result = repo.findAllByOrderByIdAsc();
-        log.info("[IngredientService] listAllOrdered Success ({}건 조회)", result.size());
         return result;
     }
 
     @Transactional
     public void update(IngredientForm form) {
-        log.info("[IngredientService] update Start");
         if (form.getRows() == null || form.getRows().isEmpty()) return;
 
         var ids = form.getRows().stream().map(IngredientEditRow::getId).toList();
         Map<Integer, Ingredient> map = repo.findAllById(ids).stream()
                 .collect(Collectors.toMap(Ingredient::getId, Function.identity()));
 
+        int changed = 0;
         for (IngredientEditRow r : form.getRows()) {
             Ingredient e = map.get(r.getId());
             if (e == null) {
                 throw new EntityNotFoundException("Ingredient not found: id = " + r.getId());
             }
+            if (e.getIsRegistered() != r.getIsRegistered() || e.getQuantity() != r.getQuantity()) {
+                changed++;
+            }
             e.setIsRegistered(r.getIsRegistered());
             e.setQuantity(r.getQuantity());
         }
-        log.info("[IngredientService] update Success");
+        log.info("[IngredientService.update] {}건 업데이트 성공", changed);
     }
 }

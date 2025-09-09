@@ -28,11 +28,10 @@ public class RecipeController {
     }
 
     @GetMapping
-    public String sheet(@RequestParam(defaultValue = "false") boolean exceptRegistered,
-                        @RequestParam(defaultValue = "false") boolean orderByTarget,
-                        @RequestParam(defaultValue = "all") String selectedCategory,
-                        Model model) {
-        log.info("[GET] /recipes : Request Recieved (exceptRegistered={}, orderByTarget={}, selectedCategory={})", exceptRegistered, orderByTarget, selectedCategory);
+    public String getPage(@RequestParam(defaultValue = "false") boolean exceptRegistered,
+                          @RequestParam(defaultValue = "false") boolean orderByTarget,
+                          @RequestParam(defaultValue = "all") String selectedCategory,
+                          Model model) {
 
         Pot pot = service.getSinglePotOrNull();
 
@@ -60,7 +59,6 @@ public class RecipeController {
         model.addAttribute("orderByTarget", orderByTarget);
         model.addAttribute("selectedCategory", selectedCategory);
 
-        log.info("[GET] /recipes : Response Success (exceptRegistered={}, orderByTarget={}, selectedCategory={})", exceptRegistered, orderByTarget, selectedCategory);
         return "recipeList";
     }
 
@@ -68,7 +66,6 @@ public class RecipeController {
     public String saveFlags(@ModelAttribute("form") @Valid RecipeForm form,
                             BindingResult br,
                             RedirectAttributes ra) {
-        log.info("[POST] /recipes/flags : Request Recieved");
 
         if (br.hasErrors()) {
             ra.addFlashAttribute("err", "입력값을 확인해주세요.");
@@ -83,7 +80,6 @@ public class RecipeController {
         ra.addAttribute("orderByTarget", form.isOrderByTarget());
         ra.addAttribute("selectedCategory", form.getSelectedCategory());
 
-        log.info("[POST] /recipes/flags : Response Success ({} recipes Saved", changed);
         return "redirect:/recipes";
     }
 
@@ -95,7 +91,6 @@ public class RecipeController {
                           @RequestParam(defaultValue = "false") boolean orderByTarget,
                           @RequestParam(defaultValue = "all") String selectedCategory,
                           RedirectAttributes ra) {
-        log.info("[POST] /recipes/pots : Request Recieved (capacity={}, isCamping={})", capacity, isCamping);
 
         service.updatePot(id, capacity, isCamping);
 
@@ -104,7 +99,6 @@ public class RecipeController {
         ra.addAttribute("orderByTarget", orderByTarget);
         ra.addAttribute("selectedCategory", selectedCategory);
 
-        log.info("[POST] /recipes/pots : Response Success (capacity={}, isCamping={})", capacity, isCamping);
         return "redirect:/recipes";
     }
 }

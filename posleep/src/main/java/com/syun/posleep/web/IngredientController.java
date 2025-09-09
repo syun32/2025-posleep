@@ -5,7 +5,6 @@ import com.syun.posleep.dto.IngredientEditRow;
 import com.syun.posleep.dto.IngredientForm;
 import com.syun.posleep.service.IngredientService;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Slf4j
 @Controller
 @RequestMapping("/ingredients")
 public class IngredientController {
@@ -25,8 +23,7 @@ public class IngredientController {
     }
 
     @GetMapping
-    public String managePage(Model model) {
-        log.info("[GET] /ingredients : Request Recieved");
+    public String getPage(Model model) {
 
         var list = svc.listAllOrdered();
 
@@ -43,16 +40,14 @@ public class IngredientController {
         model.addAttribute("ingredients", list);
         model.addAttribute("form", form);
 
-        log.info("[GET] /ingredients : Response Success");
         return "ingredientList";
     }
 
     @PostMapping("/update")
     public String update(@Valid @ModelAttribute("form") IngredientForm form,
-                             BindingResult br,
-                             RedirectAttributes ra,
-                             Model model) {
-        log.info("[POST] /ingredients/update : Request Recieved");
+                         BindingResult br,
+                         RedirectAttributes ra,
+                         Model model) {
 
         if (br.hasErrors()) {
             model.addAttribute("ingredients", svc.listAllOrdered());
@@ -61,7 +56,6 @@ public class IngredientController {
         svc.update(form);
         ra.addFlashAttribute("msg", "저장되었습니다.");
 
-        log.info("[POST] /ingredients/update : Response Success");
         return "redirect:/ingredients";
     }
 }
