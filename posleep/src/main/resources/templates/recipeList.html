@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>레시피</title>
+  <style>
+    body{font-size: small}
+    .toolbar{display: flex; gap: 12px; align-items: center; margin-bottom: 12px}
+    table{border-collapse: collapse; width: 100%; margin: auto}
+    th,td{border: 1px solid #ddd; padding: 6px}
+    th{background: #adabab}
+    .msg{color: green; margin-bottom: 12px; text-align: center}
+    .err{color: red; margin-bottom: 12px; text-align: center}
+    .right{margin-left: auto}
+    .need{width: 50px}
+    .req{width: 50px}
+    .req--not   { background:#f3f4f6; color:#6b7280; }
+    .req--full  { background:#3c78d8; }
+    .req--less4 { background:#6aa84f; }
+    .req--less7 { background:#f1c232; }
+    .req--less10{ background:#e69138; }
+    .req--more  { background:#dd7e6b; }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align: center">레시피</h1>
+
+<!-- Flash Message -->
+<div class="msg" th:if="${msg}" th:text="${msg}"></div>
+<div class="err" th:if="${err}" th:text="${err}"></div>
+
+<hr>
+
+<form id="savePot" style="text-align: center" th:action="@{/recipes/pots}" method="post" th:object="${pot}">
+  <input type="hidden" name="exceptRegistered" th:value="${exceptRegistered}"/>
+  <input type="hidden" name="orderByTarget"   th:value="${orderByTarget}"/>
+  <input type="hidden" name="selectedCategory" th:value="${selectedCategory}"/>
+
+  <input type="hidden" th:field="*{id}"/>
+  냄비 용량:
+  <input type="number" style="width:50px;margin-right:12px" th:field="*{capacity}"/>
+  <input type="checkbox" th:field="*{isCamping}">캠프 여부
+  <button type="submit" style="margin-left:12px">저장</button>
+</form>
+
+<hr>
+
+<div>
+
+  <form id="getPage" th:action="@{/recipes}" method="get">
+    <input type="hidden" name="exceptRegistered"/>
+    <input type="hidden" name="orderByTarget"/>
+    <input type="hidden" name="selectedCategory"/>
+
+  </form>
+
+  <form id="saveFlagForm" th:action="@{/recipes/flags}" method="post" th:object="${form}">
+
+    <p class="toolbar">
+      <label>
+        <input type="checkbox" th:field="*{orderByTarget}">목표 우선 정렬
+      </label>
+      <label>
+        <input type="checkbox" th:field="*{exceptRegistered}">등록된 레시피 제외
+      </label>
+
+      <label>
+        <select th:field="*{selectedCategory}">
+          <option value="all"
+                  th:selected="${selectedCategory == null or #strings.isEmpty(selectedCategory) or #strings.equalsIgnoreCase(selectedCategory,'all')}">
+            전체
+          </option>
+          <option value="카레/스튜" th:selected="${selectedCategory == '카레/스튜'}">카레/스튜</option>
+          <option value="샐러드" th:selected="${selectedCategory == '샐러드'}">샐러드</option>
+          <option value="드링크/디저트" th:selected="${selectedCategory == '드링크/디저트'}">드링크/디저트</option>
+        </select>
+      </label>
+      <button type="submit" class="btn" form="getPage" >조회</button>
+
+      <span th:text="|총 ${#lists.size(sheet)}건|">총 0건</span>
+
+      <button type="submit" class="btn right" form="saveFlagForm">변경사항 저장</button>
+    </p>
+
+    <table>
+      <thead>
+      <tr>
+        <th style="width:50px;">No.</th>
+        <th style="width:50px;">목표</th>
+        <th style="width:50px;">등록</th>
+        <th style="width:100px;">분류</th>
+        <th style="width:500px">요리</th>
+
+        <th style="width:200px;">재료1</th>
+        <th style="width:50px;">요구</th>
+        <th style="width:50px;">필요</th>
+
+        <th style="width:200px;">재료2</th>
+        <th style="width:50px;">요구</th>
+        <th style="width:50px;">필요</th>
+
+        <th style="width:200px;">재료3</th>
+        <th style="width:50px;">요구</th>
+        <th style="width:50px;">필요</th>
+
+        <th style="width:200px;">재료4</th>
+        <th style="width:50px;">요구</th>
+        <th style="width:50px;">필요</th>
+
+        <th style="width:80px;">총수량</th>
+      </tr>
+      </thead>
+      <tbody>
+
+      <tr th:each="recipe, stat : ${sheet}">
+        <td class="num">
+          <input type="hidden" th:field="*{rows[__${stat.index}__].id}"
+                 th:value="${recipe.id}"/>
+          <span th:text="${recipe.id}">0</span>
+        </td>
+
+        <td style="text-align: center">
+          <input type="checkbox" class="tgt"
+                 th:field="*{rows[__${stat.index}__].isTarget}"/>
+        </td>
+
+        <td style="text-align: center">
+          <input type="checkbox" class="chk"
+                 th:field="*{rows[__${stat.index}__].isRegistered}"/>
+        </td>
+
+        <td th:text="${recipe.category} ?: '-'">-</td>
+        <td th:text="${recipe.name}">-</td>
+
+        <td th:text="${recipe.ingredient1} ?: '-'">-</td>
+        <td class="need" th:text="${recipe.need1} ?: 0">0</td>
+        <td class="req"
+            th:text="${recipe.req1} ?: 0"
+            th:classappend="${
+              (recipe.need1 == 0 ? ' req--not'   :
+              (recipe.req1  == 0 ? ' req--full'  :
+              (recipe.req1  <  4 ? ' req--less4' :
+              (recipe.req1  <  7 ? ' req--less7' :
+              (recipe.req1  < 10 ? ' req--less10':
+                            ' req--more' )))))
+            }">0</td>
+
+        <td th:text="${recipe.ingredient2} ?: '-'">-</td>
+        <td class="need" th:text="${recipe.need2} ?: 0">0</td>
+        <td class="req"
+            th:text="${recipe.req2} ?: 0"
+            th:classappend="${
+              (recipe.need2 == 0 ? ' req--not'   :
+              (recipe.req2  == 0 ? ' req--full'  :
+              (recipe.req2  <  4 ? ' req--less4' :
+              (recipe.req2  <  7 ? ' req--less7' :
+              (recipe.req2  < 10 ? ' req--less10':
+                            ' req--more' )))))
+            }">0</td>
+
+
+        <td th:text="${recipe.ingredient3} ?: '-'">-</td>
+        <td class="need" th:text="${recipe.need3} ?: 0">0</td>
+        <td class="req"
+            th:text="${recipe.req3} ?: 0"
+            th:classappend="${
+              (recipe.need3 == 0 ? ' req--not'   :
+              (recipe.req3  == 0 ? ' req--full'  :
+              (recipe.req3  <  4 ? ' req--less4' :
+              (recipe.req3  <  7 ? ' req--less7' :
+              (recipe.req3  < 10 ? ' req--less10':
+                            ' req--more' )))))
+            }">0</td>
+
+        <td th:text="${recipe.ingredient4} ?: '-'">-</td>
+        <td class="need" th:text="${recipe.need4} ?: 0">0</td>
+        <td class="req"
+            th:text="${recipe.req4} ?: 0"
+            th:classappend="${
+              (recipe.need4 == 0 ? ' req--not'   :
+              (recipe.req4  == 0 ? ' req--full'  :
+              (recipe.req4  <  4 ? ' req--less4' :
+              (recipe.req4  <  7 ? ' req--less7' :
+              (recipe.req4  < 10 ? ' req--less10':
+                            ' req--more' )))))
+            }">0</td>
+
+        <td class="num" th:text="${recipe.totalQuantity} ?: 0">0</td>
+      </tr>
+      </tbody>
+    </table>
+
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const saveFlagForm = document.getElementById('saveFlagForm');
+
+    const chkTarget   = saveFlagForm.querySelector('input[name="orderByTarget"]');
+    const chkRegister = saveFlagForm.querySelector('input[name="exceptRegistered"]');
+    const selCategory = saveFlagForm.querySelector('select[name="selectedCategory"]');
+
+    const syncToForm = (targetForm) => {
+      const hidTarget   = targetForm.querySelector('input[name="orderByTarget"]');
+      const hidRegister = targetForm.querySelector('input[name="exceptRegistered"]');
+      const hidCategory = targetForm.querySelector('input[name="selectedCategory"]');
+
+      if (hidTarget)   hidTarget.value   = chkTarget?.checked   ? 'true' : 'false';
+      if (hidRegister) hidRegister.value = chkRegister?.checked ? 'true' : 'false';
+      if (hidCategory) hidCategory.value = selCategory?.value ?? 'all';
+    };
+
+    document.querySelector('form#getPage')?.addEventListener('submit', function (e) {
+      syncToForm(e.currentTarget);
+    }, true);
+  });
+</script>
+
+</body>
+</html>
