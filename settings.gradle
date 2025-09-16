@@ -1,0 +1,2 @@
+rootProject.name = "2025-posleep"
+include("backend")
