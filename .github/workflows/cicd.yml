@@ -28,24 +28,29 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Pick Gradle wrapper location dynamically (backend/gradlew or ./gradlew)
       - name: Pick Gradle wrapper (root or backend)
         id: pick
         shell: bash
         run: |
           set -euo pipefail
+          WRAPPER=""
+          ARGS=""
           if [ -x backend/gradlew ]; then
-            echo "wrapper=backend/gradlew" >> $GITHUB_OUTPUT
-            echo "args=" >> $GITHUB_OUTPUT
+            WRAPPER="backend/gradlew"
+            ARGS=""
             echo "Using backend/gradlew"
-          elif [ -x gradlew ]; then
-            echo "wrapper=./gradlew" >> $GITHUB_OUTPUT
-            echo "args=-p backend" >> $GITHUB_OUTPUT
+          fi
+          if [ -z "${WRAPPER:-}" ] && [ -x ./gradlew ]; then
+            WRAPPER="./gradlew"
+            ARGS="-p backend"
             echo "Using root ./gradlew with -p backend"
-          else
+          fi
+          if [ -z "${WRAPPER:-}" ]; then
             echo "Gradle wrapper not found (backend/gradlew or ./gradlew missing)"
             exit 1
           fi
+          echo "wrapper=${WRAPPER}" >> "$GITHUB_OUTPUT"
+          echo "args=${ARGS}" >> "$GITHUB_OUTPUT"
 
       - name: Make wrapper executable
         run: chmod +x "${{ steps.pick.outputs.wrapper }}"
@@ -93,3 +98,50 @@ jobs:
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           build-args: |
             GIT_SHA=${{ github.sha }}
+
+  deploy:
+    name: Deploy to EC2
+    needs: build-and-push-backend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout (compose & infra files)
+        uses: actions/checkout@v4
+
+      - name: Copy infra files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infra/docker-compose.yml,infra/nginx/nginx.conf,infra/.env.example"
+          target: "/srv/posleep"
+          strip_components: 1
+          overwrite: true
+
+      - name: SSH & deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            sudo mkdir -p /srv/posleep
+            cd /srv/posleep
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Docker missing on host" >&2
+              exit 1
+            fi
+            if ! docker compose version >/dev/null 2>&1; then
+              echo "Docker Compose plugin missing on host" >&2
+              exit 1
+            fi
+            if [ ! -f .env ]; then
+              cp .env.example .env || true
+              echo "WARNING: Created placeholder .env. Fill real secrets on EC2."
+            fi
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
