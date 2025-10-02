@@ -64,24 +64,8 @@ public interface RecipeQueryRepository extends JpaRepository<Recipe, Integer> {
         LEFT JOIN recipe_ingredient ri4 ON ri4.recipe_id = r.id AND ri4.position = 4
         LEFT JOIN ingredient        i4  ON i4.id          = ri4.ingredient_id
 
-        WHERE 
-            (
-                (:exceptRegistered = TRUE AND :orderByTarget = FALSE AND r.is_registered = 0)
-                OR (:exceptRegistered = TRUE AND :orderByTarget = TRUE AND (r.is_registered = 0 or r.is_target = 1))
-                OR (:exceptRegistered = FALSE)
-            )
-            AND (
-                :selectedCategory IS NULL
-                OR LOWER(:selectedCategory) = 'all'
-                OR r.category = :selectedCategory
-            )
         ORDER BY
-            IF (:orderByTarget,    r.is_target,    0)  DESC,
             r.id
         """, nativeQuery = true)
-    List<RecipeSheetRow> findRecipeSheet(
-            @Param("exceptRegistered") boolean exceptRegistered,
-            @Param("orderByTarget") boolean orderByTarget,
-            @Param("selectedCategory")  String selectedCategory
-    );
+    List<RecipeSheetRow> findRecipeSheet();
 }

@@ -36,7 +36,7 @@ public class RecipeService {
     }
 
     @Transactional
-    public void updatePot(Integer potId, Integer capacity, boolean isCamping) {
+    public void updatePot(Integer potId, Integer capacity, boolean isCamping, String category) {
         Pot pot = (potId != null)
                 ? potRepository.findById(potId).orElseThrow(() -> new IllegalArgumentException("Pot not found: " + potId))
                 : potRepository.findFirstByOrderByIdAsc().orElseThrow(() -> new IllegalArgumentException("Pot row not found"));
@@ -44,11 +44,12 @@ public class RecipeService {
         int cap = (capacity == null || capacity < 0) ? 0 : capacity;
         pot.setCapacity(cap);
         pot.setIsCamping(isCamping);
+        pot.setCategory(category);
     }
 
     @Transactional(readOnly = true)
-    public List<RecipeSheetRow> findRecipeSheet(boolean onlyRegistered, boolean orderByTarget, String selectedCategory) {
-        List<RecipeSheetRow> result = queryRepository.findRecipeSheet(onlyRegistered, orderByTarget, selectedCategory);
+    public List<RecipeSheetRow> findRecipeSheet() {
+        List<RecipeSheetRow> result = queryRepository.findRecipeSheet();
         return result;
     }
 
