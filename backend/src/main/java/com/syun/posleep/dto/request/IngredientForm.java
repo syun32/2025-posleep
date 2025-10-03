@@ -1,4 +1,4 @@
-package com.syun.posleep.dto;
+package com.syun.posleep.dto.request;
 
 import java.util.ArrayList;
 import java.util.List;

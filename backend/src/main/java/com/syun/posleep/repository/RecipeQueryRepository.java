@@ -1,6 +1,7 @@
 package com.syun.posleep.repository;
 
 import com.syun.posleep.domain.Recipe;
+import com.syun.posleep.domain.RecipeIngredient;
 import com.syun.posleep.query.RecipeSheetRow;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -68,4 +69,11 @@ public interface RecipeQueryRepository extends JpaRepository<Recipe, Integer> {
             r.id
         """, nativeQuery = true)
     List<RecipeSheetRow> findRecipeSheet();
+
+    @Query(value = """
+        SELECT *
+        FROM recipe_ingredient
+        WHERE recipe_id = :recipeId
+        """, nativeQuery = true)
+    List<RecipeIngredient> findRecipeIngredient(@Param("recipeId") Integer recipeId);
 }

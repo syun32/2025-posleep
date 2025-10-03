@@ -1,4 +1,4 @@
-package com.syun.posleep.dto;
+package com.syun.posleep.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

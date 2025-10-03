@@ -1,8 +1,10 @@
 package com.syun.posleep.service;
 
 import com.syun.posleep.domain.Ingredient;
-import com.syun.posleep.dto.IngredientEditRow;
-import com.syun.posleep.dto.IngredientForm;
+import com.syun.posleep.domain.RecipeIngredient;
+import com.syun.posleep.dto.request.IngredientEditRow;
+import com.syun.posleep.dto.request.IngredientForm;
+import com.syun.posleep.query.RecipeSheetRow;
 import com.syun.posleep.repository.IngredientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -49,5 +51,23 @@ public class IngredientService {
             e.setQuantity(r.getQuantity());
         }
         log.info("[IngredientService.update] {}건 업데이트 성공", changed);
+    }
+
+    @Transactional(readOnly = true)
+    public void ensureAllEnough(List<RecipeIngredient> recipeIngredientList) {
+        for (RecipeIngredient r : recipeIngredientList) {
+            Ingredient i = repo.findFirstById(r.getIngredientId());
+            if (i.getQuantity() < r.getQuantity()) {
+                throw new IllegalStateException("식재료 부족: " + i.getName());
+            }
+        }
+    }
+
+    @Transactional
+    public void decreaseByRecipe(List<RecipeIngredient> recipeIngredientList) {
+        for (RecipeIngredient r : recipeIngredientList) {
+            Ingredient i = repo.findFirstById(r.getIngredientId());
+            i.decrease(r.getQuantity());
+        }
     }
 }

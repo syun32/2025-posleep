@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SwitchSmall from '@/components/ui/SwitchSmall';
 import { ingredientIcon } from '@/utils/IngrredientIcon';
+import { ApiResponse } from "@/types/api"
 
 type Ingredient = {
     id: number;
@@ -12,6 +13,7 @@ type Ingredient = {
     isRegistered: boolean;
     quantity: number;
 };
+
 type IngredientFormReq = { rows: Ingredient[] };
 
 type StatusFilter = 'all' | 'registered' | 'unregistered';
@@ -38,7 +40,8 @@ export default function IngredientsPage() {
                 setLoading(true);
                 const res = await fetch(`${BASE}/ingredients`, { cache: 'no-store' });
                 if (!res.ok) throw new Error();
-                const data: Ingredient[] = await res.json();
+                const json: ApiResponse<Ingredient[]> = await res.json();
+                const data: Ingredient[] = json.data;
                 setItems(data);
             } catch {
                 setMsg({ type: 'error', text: '목록을 불러오지 못했어요.' });

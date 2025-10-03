@@ -1,8 +1,9 @@
 package com.syun.posleep.service;
 
 import com.syun.posleep.domain.Pot;
-import com.syun.posleep.dto.RecipeEditRow;
-import com.syun.posleep.dto.RecipeForm;
+import com.syun.posleep.domain.RecipeIngredient;
+import com.syun.posleep.dto.request.RecipeEditRow;
+import com.syun.posleep.dto.request.RecipeForm;
 import com.syun.posleep.query.RecipeSheetRow;
 import com.syun.posleep.repository.PotRepository;
 import com.syun.posleep.repository.RecipeQueryRepository;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -63,5 +63,10 @@ public class RecipeService {
         }
         log.info("[RecipeService.updateFlags] {}건 업데이트", changed);
         return changed;
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecipeIngredient> findRecipeIngredient(Integer recipeId) {
+        return queryRepository.findRecipeIngredient(recipeId);
     }
 }

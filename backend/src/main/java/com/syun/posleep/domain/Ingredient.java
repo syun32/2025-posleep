@@ -82,4 +82,8 @@ public class Ingredient {
                 ", quantity=" + quantity +
                 '}';
     }
+
+    public void decrease(Integer diff) {
+        this.quantity -= diff;
+    }
 }

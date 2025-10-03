@@ -1,8 +1,10 @@
 package com.syun.posleep.web;
 
 import com.syun.posleep.domain.Pot;
-import com.syun.posleep.dto.RecipeForm;
+import com.syun.posleep.dto.request.RecipeForm;
+import com.syun.posleep.dto.response.ApiResponse;
 import com.syun.posleep.query.RecipeSheetRow;
+import com.syun.posleep.service.CookingService;
 import com.syun.posleep.service.RecipeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,20 +18,24 @@ import java.util.Map;
 @RequestMapping("/recipes")
 public class RecipeController {
 
-    private final RecipeService svc;
+    private final RecipeService recipeService;
+    private final CookingService cookingService;
 
-    public RecipeController(RecipeService svc) {
-        this.svc = svc;
+    public RecipeController(RecipeService recipeService, CookingService cookingService) {
+        this.recipeService = recipeService;
+        this.cookingService = cookingService;
     }
 
     @GetMapping
-    public List<RecipeSheetRow> getRecipes() {
-        return svc.findRecipeSheet();
+    public ApiResponse<List<RecipeSheetRow>> getRecipes() {
+        List<RecipeSheetRow> list = recipeService.findRecipeSheet();
+        return ApiResponse.success(list);
     }
 
     @GetMapping("/pots")
-    public Pot getPot() {
-        return svc.getSinglePotOrNull();
+    public ApiResponse<Pot> getPot() {
+        Pot pot = recipeService.getSinglePotOrNull();
+        return ApiResponse.success(pot);
     }
 
     @PostMapping(
@@ -37,7 +43,7 @@ public class RecipeController {
             consumes = "application/json"
     )
     public ResponseEntity<?> saveFlags(@RequestBody RecipeForm form) {
-        int changed = svc.updateFlags(form);
+        int changed = recipeService.updateFlags(form);
         return ResponseEntity.ok(Map.of("changed", changed));
     }
 
@@ -46,7 +52,16 @@ public class RecipeController {
             consumes = "application/json"
     )
     public ResponseEntity<?> savePot(@RequestBody Pot pot) {
-        svc.updatePot(pot.getId(), pot.getCapacity(), pot.getIsCamping(), pot.getCategory());
+        recipeService.updatePot(pot.getId(), pot.getCapacity(), pot.getIsCamping(), pot.getCategory());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(
+            path = "/cook",
+            consumes = "application/json"
+    )
+    public ResponseEntity<?> cook(@RequestBody Integer recipeId) {
+        cookingService.runCooking(recipeId);
         return ResponseEntity.ok().build();
     }
 }

@@ -1,12 +1,11 @@
 package com.syun.posleep.web;
 
 import com.syun.posleep.domain.Ingredient;
-import com.syun.posleep.dto.IngredientForm;
+import com.syun.posleep.dto.response.ApiResponse;
+import com.syun.posleep.dto.request.IngredientForm;
 import com.syun.posleep.service.IngredientService;
 import jakarta.validation.Valid;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,13 +20,14 @@ public class IngredientController {
     }
 
     @GetMapping
-    public List<Ingredient> getPage(Model model) {
-        return svc.listAllOrdered();
+    public ApiResponse<List<Ingredient>> getPage() {
+        List<Ingredient> list = svc.listAllOrdered();
+        return ApiResponse.success(list);
     }
 
     @PostMapping(
             path = "/update",
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = "application/json"
     )
     public ResponseEntity<?> update(@Valid @RequestBody IngredientForm form,
                                  BindingResult br) {

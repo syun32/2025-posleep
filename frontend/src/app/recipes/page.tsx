@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SwitchSmall from '@/components/ui/SwitchSmall';
 import { ingredientIcon } from '@/utils/IngrredientIcon';
+import { ApiResponse } from '@/types/api';
 
 type Recipe = {
     id: number;
@@ -42,6 +43,7 @@ export default function RecipesPage() {
     const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [pot, setPot] = useState<PotSetting>({ capacity: 0, isCamping: false, category: '전체' });
     const [potSaving, setPotSaving] = useState(false);
+    const [cookingId, setCookingId] = useState<number | null>(null);
 
     // 검색/정렬/필터
     const [q, setQ] = useState('');
@@ -56,14 +58,16 @@ export default function RecipesPage() {
         (async () => {
             try {
                 setLoading(true);
-                const [r1, r2] = await Promise.all([
+                const [resRecipe, resPot] = await Promise.all([
                     fetch(`${BASE}/recipes`, { cache: 'no-store' }),
                     fetch(`${BASE}/recipes/pots`, { cache: 'no-store' }),
                 ]);
-                if (!r1.ok || !r2.ok) throw new Error();
-                const data: Recipe[] = await r1.json();
-                const p: PotSetting = await r2.json();
-                setRows(data);
+                if (!resRecipe.ok || !resPot.ok) throw new Error();
+                const dataRecipe: ApiResponse<Recipe[]> = await resRecipe.json();
+                const dataPot: ApiResponse<PotSetting> = await resPot.json();
+                const rows: Recipe[] = dataRecipe.data;
+                const p: PotSetting = dataPot.data;
+                setRows(rows);
                 const nextPot = p ?? { capacity: 0, isCamping: false, category: '전체' };
                 if (!nextPot.category) nextPot.category = '전체';
                 setPot(nextPot);
@@ -141,9 +145,39 @@ export default function RecipesPage() {
         return 'bg-teal-400 text-black';
     }
 
+    // 총 필요 수량 구하기
+    const getReqTotal = (req1?: number | null, req2?: number | null, req3?: number | null, req4?: number | null) => {
+        return (req1 ?? 0) + (req2 ?? 0) + (req3 ?? 0) + (req4 ?? 0);
+    }
+
     // 상태 변경
     const toggle = (id: number, field: 'isTarget' | 'isRegistered') => {
         setRows(prev => prev.map(r => (r.id === id ? { ...r, [field]: !r[field] } : r)));
+    };
+
+    // 요리 실행
+    const runCooking = async (r: Recipe) => {
+        if (getReqTotal(r.req1, r.req2, r.req3, r.req4) != 0) {
+            alert('재료가 부족합니다!');
+            return;
+        }
+        if (!window.confirm('요리를 실행하시겠습니까?')) return;
+
+        try {
+            setCookingId(r.id);
+            const res = await fetch(`${BASE}/recipes/cook`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(r.id),
+            });
+            if (!res.ok) throw new Error();
+
+            // 성공 시 새로고침
+            window.location.reload();
+        } catch (e) {
+            alert('요리 실행에 실패했어요. 잠시 후 다시 시도해주세요.');
+            setCookingId(null);
+        }
     };
 
     // 저장
@@ -191,9 +225,9 @@ export default function RecipesPage() {
 
     const resetControls = () => {
         setQ('');
-        setCat(pot.category??'all');
+        setCat(pot.category ?? 'all');
         setSortKey('target');
-        setSortDir('asc');
+        setSortDir('desc');
     };
 
     return (
@@ -260,7 +294,7 @@ export default function RecipesPage() {
             {/* 검색 / 정렬 / 분류 드롭다운 */}
             <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-end sm:justify-between">
                 <div className="flex flex-1 flex-col gap-2 sm:flex-row">
-                    <div className="sm:w-72">
+                    <div className="sm:w-48">
                         <label className="mb-1 block text-[11px] font-medium text-gray-600">검색(요리명/분류)</label>
                         <input
                             value={q}
@@ -270,7 +304,7 @@ export default function RecipesPage() {
                         />
                     </div>
 
-                    <div className="sm:w-48">
+                    <div className="sm:w-36">
                         <label className="mb-1 block text-[11px] font-medium text-gray-600">분류</label>
                         <select
                             value={cat}
@@ -283,7 +317,7 @@ export default function RecipesPage() {
                         </select>
                     </div>
 
-                    <div className="sm:w-56">
+                    <div className="sm:w-40">
                         <label className="mb-1 block text-[11px] font-medium text-gray-600">정렬</label>
                         <div className="flex gap-2">
                             <select
@@ -377,7 +411,8 @@ export default function RecipesPage() {
                                         <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
                                         <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
 
-                                        <th className="w-16 border-b border-gray-200 px-2 py-2 text-center">총</th>
+                                        <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">총</th>
+                                        <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">필요</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -409,69 +444,84 @@ export default function RecipesPage() {
 
                                             <td className="px-2 py-1 text-xs text-gray-700">
                                                 {r.ingredient1 ? (
-                                                <div className="flex items-center gap-0.5">
-                                                    <Image
-                                                        src={`/icons/${ingredientIcon(r.ingredient1)}`}
-                                                        alt={r.ingredient1}
-                                                        width={18}
-                                                        height={18}
-                                                    />
-                                                    <span>{r.ingredient1}</span>
-                                                </div>
-                                                ) : ( '-' )}
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Image
+                                                            src={`/icons/${ingredientIcon(r.ingredient1)}`}
+                                                            alt={r.ingredient1}
+                                                            width={18}
+                                                            height={18}
+                                                        />
+                                                        <span>{r.ingredient1}</span>
+                                                    </div>
+                                                ) : ('-')}
                                             </td>
                                             <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need1 ?? 0}</td>
                                             <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need1, r.req1)}`}>{r.req1 ?? 0}</td>
 
                                             <td className="px-2 py-1 text-xs text-gray-700">
                                                 {r.ingredient2 ? (
-                                                <div className="flex items-center gap-0.5">
-                                                    <Image
-                                                        src={`/icons/${ingredientIcon(r.ingredient2)}`}
-                                                        alt={r.ingredient2}
-                                                        width={18}
-                                                        height={18}
-                                                    />
-                                                    <span>{r.ingredient2}</span>
-                                                </div>
-                                                ) : ( '-' )}
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Image
+                                                            src={`/icons/${ingredientIcon(r.ingredient2)}`}
+                                                            alt={r.ingredient2}
+                                                            width={18}
+                                                            height={18}
+                                                        />
+                                                        <span>{r.ingredient2}</span>
+                                                    </div>
+                                                ) : ('-')}
                                             </td>
                                             <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need2 ?? 0}</td>
                                             <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need2, r.req2)}`}>{r.req2 ?? 0}</td>
 
                                             <td className="px-2 py-1 text-xs text-gray-700">
                                                 {r.ingredient3 ? (
-                                                <div className="flex items-center gap-0.5">
-                                                    <Image
-                                                        src={`/icons/${ingredientIcon(r.ingredient3)}`}
-                                                        alt={r.ingredient3}
-                                                        width={18}
-                                                        height={18}
-                                                    />
-                                                    <span>{r.ingredient3}</span>
-                                                </div>
-                                                ) : ( '-' )}
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Image
+                                                            src={`/icons/${ingredientIcon(r.ingredient3)}`}
+                                                            alt={r.ingredient3}
+                                                            width={18}
+                                                            height={18}
+                                                        />
+                                                        <span>{r.ingredient3}</span>
+                                                    </div>
+                                                ) : ('-')}
                                             </td>
                                             <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need3 ?? 0}</td>
                                             <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need3, r.req3)}`}>{r.req3 ?? 0}</td>
 
                                             <td className="px-2 py-1 text-xs text-gray-700">
                                                 {r.ingredient4 ? (
-                                                <div className="flex items-center gap-0.5">
-                                                    <Image
-                                                        src={`/icons/${ingredientIcon(r.ingredient4)}`}
-                                                        alt={r.ingredient4}
-                                                        width={18}
-                                                        height={18}
-                                                    />
-                                                    <span>{r.ingredient4}</span>
-                                                </div>
-                                                ) : ( '-' )}
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Image
+                                                            src={`/icons/${ingredientIcon(r.ingredient4)}`}
+                                                            alt={r.ingredient4}
+                                                            width={18}
+                                                            height={18}
+                                                        />
+                                                        <span>{r.ingredient4}</span>
+                                                    </div>
+                                                ) : ('-')}
                                             </td>
                                             <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need4 ?? 0}</td>
                                             <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need4, r.req4)}`}>{r.req4 ?? 0}</td>
 
-                                            <td className={`px-2 py-1 text-center text-[13px] text-gray-800 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>{r.totalQuantity ?? 0}</td>
+                                            <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>{r.totalQuantity ?? 0}</td>
+                                            <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
+                                                {getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => runCooking(r)}
+                                                        disabled={cookingId === r.id}
+                                                        className="w-full text-center font-medium text-gray-900 hover:underline disabled:opacity-60"
+                                                        title="요리 실행"
+                                                    >
+                                                        {cookingId === r.id ? '요리중' : getReqTotal(r.req1, r.req2, r.req3, r.req4)}
+                                                    </button>
+                                                ) : (
+                                                    getReqTotal(r.req1, r.req2, r.req3, r.req4)
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

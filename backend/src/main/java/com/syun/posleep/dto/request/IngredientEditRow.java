@@ -1,4 +1,4 @@
-package com.syun.posleep.dto;
+package com.syun.posleep.dto.request;
 
 import com.syun.posleep.domain.Ingredient;
 import jakarta.validation.constraints.Min;
