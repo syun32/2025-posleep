@@ -1,8 +1,6 @@
 package com.syun.posleep.service;
 
-import com.syun.posleep.domain.Recipe;
 import com.syun.posleep.domain.RecipeIngredient;
-import com.syun.posleep.query.RecipeSheetRow;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

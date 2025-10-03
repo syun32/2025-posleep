@@ -12,6 +12,7 @@ type Ingredient = {
     name: string;
     isRegistered: boolean;
     quantity: number;
+    targetQuantity: number;
 };
 
 type IngredientFormReq = { rows: Ingredient[] };
@@ -123,6 +124,7 @@ export default function IngredientsPage() {
             name: it.name,
             isRegistered: it.isRegistered,
             quantity: it.quantity ?? 0,
+            targetQuantity: it.targetQuantity ?? 0,
         })),
     });
 
@@ -272,7 +274,9 @@ export default function IngredientsPage() {
                                 <tbody>
                                     {viewRows.map((it, viewIdx) => (
                                         <tr key={it.id} className="group hover:bg-gray-50/70 [&>td]:border-b [&>td]:border-gray-100">
-                                            <td className="px-4 py-1 text-sm text-gray-700">{it.id}</td>
+                                            <td className="px-4 py-1 text-sm text-gray-700">
+                                                <span>{it.id}</span>
+                                            </td>
 
                                             {/* 등록여부 토글 */}
                                             <td className="px-4 py-1 text-center">
@@ -282,18 +286,28 @@ export default function IngredientsPage() {
                                                     label="캠프 여부"
                                                 />
                                             </td>
-
                                             <td className="px-4 py-1 text-sm font-medium text-gray-800">
-                                                <div className="flex items-center gap-2">
-                                                    <Image
-                                                        src={`/icons/${ingredientIcon(it.name)}`}
-                                                        alt={it.name}
-                                                        width={20}
-                                                        height={20}
-                                                    />
-                                                    <span>{it.name}</span>
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <Image
+                                                            src={`/icons/${ingredientIcon(it.name)}`}
+                                                            alt={it.name}
+                                                            width={20}
+                                                            height={20}
+                                                        />
+                                                        <span>{it.name}</span>
+                                                    </div>
+                                                    {it.targetQuantity && (
+                                                        <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+                                                            <span className={it.quantity >= it.targetQuantity ? "text-blue-300" : "text-red-300"}>
+                                                                {it.quantity - it.targetQuantity}
+                                                            </span>
+                                                            <span className="text-gray-500">/ {it.targetQuantity}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
+
 
                                             {/* 수량 스텝퍼 */}
                                             <td className="px-4 py-1">

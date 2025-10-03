@@ -1,8 +1,8 @@
 package com.syun.posleep.web;
 
-import com.syun.posleep.domain.Ingredient;
 import com.syun.posleep.dto.response.ApiResponse;
 import com.syun.posleep.dto.request.IngredientForm;
+import com.syun.posleep.query.IngredientSheetRow;
 import com.syun.posleep.service.IngredientService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +20,8 @@ public class IngredientController {
     }
 
     @GetMapping
-    public ApiResponse<List<Ingredient>> getPage() {
-        List<Ingredient> list = svc.listAllOrdered();
+    public ApiResponse<List<IngredientSheetRow>> getPage() {
+        List<IngredientSheetRow> list = svc.listAllOrdered();
         return ApiResponse.success(list);
     }
 

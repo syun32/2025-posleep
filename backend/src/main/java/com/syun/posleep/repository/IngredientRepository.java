@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface IngredientRepository extends JpaRepository<Ingredient, Integer> {
-    List<Ingredient> findAllByOrderByIdAsc();
 
     Ingredient findFirstById(Integer id);
 }

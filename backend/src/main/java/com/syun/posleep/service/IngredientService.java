@@ -4,7 +4,9 @@ import com.syun.posleep.domain.Ingredient;
 import com.syun.posleep.domain.RecipeIngredient;
 import com.syun.posleep.dto.request.IngredientEditRow;
 import com.syun.posleep.dto.request.IngredientForm;
+import com.syun.posleep.query.IngredientSheetRow;
 import com.syun.posleep.query.RecipeSheetRow;
+import com.syun.posleep.repository.IngredientQueryRepository;
 import com.syun.posleep.repository.IngredientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +22,15 @@ import java.util.stream.Collectors;
 @Service
 public class IngredientService {
     private final IngredientRepository repo;
-    public IngredientService(IngredientRepository repo) {
+    private final IngredientQueryRepository queryRepository;
+    public IngredientService(IngredientRepository repo, IngredientQueryRepository queryRepository) {
         this.repo = repo;
+        this.queryRepository = queryRepository;
     }
 
     @Transactional(readOnly = true)
-    public List<Ingredient> listAllOrdered() {
-        List<Ingredient> result = repo.findAllByOrderByIdAsc();
+    public List<IngredientSheetRow> listAllOrdered() {
+        List<IngredientSheetRow> result = queryRepository.findIngredientSheet();
         return result;
     }
 
