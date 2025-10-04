@@ -127,7 +127,7 @@ export default function RecipesPage() {
         if (n === 0) return 'bg-gray-100 text-gray-500';
         if (r === 0) return 'bg-sky-500 text-white';
         if (r < 4) return 'bg-green-600 text-white';
-        if (r < 7) return 'bg-yellow-500 text-white';
+        if (r < 7) return 'bg-yellow-400 text-white';
         if (r < 10) return 'bg-orange-400 text-white';
         return 'bg-red-400 text-white';
     };
@@ -232,56 +232,277 @@ export default function RecipesPage() {
 
     return (
         <main className="mx-auto max-w-6xl p-5 relative">
-            {/* Pot 설정 */}
-            <div className="mb-3 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold tracking-tight">레시피</h1>
+            <section className="cq mx-auto w-full max-w-[1100px] mb-3">
+                {/* ===== 모바일 : 토글 목록 ===== */}
+                <div className="cq-mobile space-y-2">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h1 className="text-2xl font-semibold tracking-tight">레시피</h1>
 
-                <div className="flex items-end gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-                    <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600">냄비 용량</label>
-                        <input
-                            type="number"
-                            min={0}
-                            value={pot.capacity ?? 0}
-                            onChange={(e) => setPot(p => ({ ...p, capacity: Math.max(0, Number(e.target.value)) }))}
-                            className="w-24 rounded-xl border border-gray-300 px-2 py-1 text-sm text-black outline-none focus:ring-2 focus:ring-gray-200"
-                        />
+                        {/* 냄비 설정 (용량/캠프/카테고리) */}
+                        <details className="group rounded-2xl border border-gray-200 bg-white shadow-sm">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-900">냄비 설정</span>
+                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
+                                        용량 {pot.capacity ?? 0}
+                                    </span>
+                                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${pot.isCamping ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-600'}`}>
+                                        캠프 {pot.isCamping ? 'ON' : 'OFF'}
+                                    </span>
+                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
+                                        {pot.category ?? '전체'}
+                                    </span>
+                                </div>
+                                <svg className="h-4 w-4 text-gray-500 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.24 4.38a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06z" />
+                                </svg>
+                            </summary>
+
+                            <div className="px-3 pb-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="flex flex-col gap-1">
+                                        <span className="text-xs text-gray-500">냄비 용량</span>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={pot.capacity ?? 0}
+                                            onChange={(e) => setPot(p => ({ ...p, capacity: Math.max(0, Number(e.target.value)) }))}
+                                            className="h-9 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-2.5">
+                                        <span className="text-xs text-gray-500">캠프 여부</span>
+                                        <SwitchSmall size="sm" checked={pot.isCamping} onChange={() => setPot(p => ({ ...p, isCamping: !p.isCamping }))} label="캠프 여부" />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 col-span-2">
+                                        <span className="text-xs text-gray-500">카테고리</span>
+                                        <select
+                                            value={pot.category ?? '전체'}
+                                            onChange={(e) => setPot(p => ({ ...p, category: e.target.value }))}
+                                            className="h-9 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                                        >
+                                            {POT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </label>
+
+                                    <div className="col-span-2">
+                                        <button
+                                            type="button"
+                                            onClick={onSavePot}
+                                            disabled={potSaving}
+                                            className="inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-3 py-1.5 text-sm text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {potSaving ? (
+                                                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            ) : (
+                                                <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" /></svg>
+                                            )}
+                                            저장
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
                     </div>
-                    <div className="pt-5">
-                        <SwitchSmall
-                            checked={pot.isCamping}
-                            onChange={() => setPot(p => ({ ...p, isCamping: !p.isCamping }))}
-                            label="캠프 여부"
-                        />
-                        <span className="ml-2 text-xs text-gray-600 align-middle">캠프 여부</span>
-                    </div>
-                    <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600">카테고리</label>
-                        <select
-                            value={pot.category ?? '전체'}
-                            onChange={(e) => setPot(p => ({ ...p, category: e.target.value }))}
-                            className="w-30 rounded-xl border border-gray-300 px-2 py-1 text-sm text-black outline-none focus:ring-2 focus:ring-gray-200"
-                        >
-                            {POT_CATEGORIES.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onSavePot}
-                        disabled={potSaving}
-                        className="ml-2 inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-3 py-1.5 text-sm text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        {potSaving ? (
-                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" /></svg>
-                        )}
-                        저장
-                    </button>
+
+                    {/* 정렬 · 필터 */}
+                    <details className="group rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
+                            <span className="text-sm font-medium text-gray-900">정렬 · 필터</span>
+                            <svg className="h-4 w-4 text-gray-500 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.24 4.38a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06z" />
+                            </svg>
+                        </summary>
+
+                        <div className="px-3 pb-3">
+                            <div className="space-y-3">
+                                {/* 검색 */}
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-xs text-gray-500">검색(요리명/분류)</span>
+                                    <input
+                                        value={q}
+                                        onChange={(e) => setQ(e.target.value)}
+                                        placeholder="예: 카레, 샐러드…"
+                                        className="h-9 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                                    />
+                                </label>
+
+                                {/* 분류 / 정렬 */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="flex flex-col gap-1">
+                                        <span className="text-xs text-gray-500">분류</span>
+                                        <select
+                                            value={cat}
+                                            onChange={(e) => setCat(e.target.value)}
+                                            className="h-9 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                                        >
+                                            {categoryOptions.map(opt => <option key={opt} value={opt}>{opt === 'all' ? '전체' : opt}</option>)}
+                                        </select>
+                                    </label>
+
+                                    <label className="flex flex-col gap-1">
+                                        <span className="text-xs text-gray-500">정렬</span>
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                value={sortKey}
+                                                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                                                className="h-9 w-full rounded-xl border border-gray-300 px-3 text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+                                            >
+                                                <option value="id">번호</option>
+                                                <option value="name">이름</option>
+                                                <option value="total">총수량</option>
+                                                <option value="registered">등록여부</option>
+                                                <option value="target">목표</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                                                className="h-9 w-9 shrink-0 rounded-xl border border-gray-300 text-gray-700"
+                                                title="정렬 방향 전환"
+                                            >
+                                                {sortDir === 'asc' ? '↑' : '↓'}
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div className="pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={resetControls}
+                                        className="rounded-xl border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                                    >
+                                        초기화
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
-            </div>
+
+                {/* ===== 데스크톱 ===== */}
+                <div className="cq-desktop">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h1 className="text-2xl font-semibold tracking-tight">레시피</h1>
+                        <div className="mb-3 flex items-center justify-between">
+
+                            {/* Pot 설정 */}
+                            <div className="flex items-end gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-gray-600">냄비 용량</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={pot.capacity ?? 0}
+                                        onChange={(e) => setPot(p => ({ ...p, capacity: Math.max(0, Number(e.target.value)) }))}
+                                        className="w-20 rounded-xl border border-gray-300 px-2 py-1 text-sm text-black outline-none focus:ring-2 focus:ring-gray-200"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 mr-2 block text-xs font-medium text-gray-600">캠프 여부</label>
+                                    <SwitchSmall
+                                        checked={pot.isCamping}
+                                        onChange={() => setPot(p => ({ ...p, isCamping: !p.isCamping }))}
+                                        label="캠프 여부"
+                                        size="sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-gray-600">카테고리</label>
+                                    <select
+                                        value={pot.category ?? '전체'}
+                                        onChange={(e) => setPot(p => ({ ...p, category: e.target.value }))}
+                                        className="w-30 rounded-xl border border-gray-300 px-2 py-1 text-sm text-black outline-none focus:ring-2 focus:ring-gray-200"
+                                    >
+                                        {POT_CATEGORIES.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={onSavePot}
+                                    disabled={potSaving}
+                                    className="ml-2 inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-3 py-1.5 text-sm text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {potSaving ? (
+                                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" /></svg>
+                                    )}
+                                    저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 검색 / 정렬 / 분류 카드 */}
+                    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+                            <div className="sm:w-48">
+                                <label className="mb-1 block text-[11px] font-medium text-gray-600">검색(요리명/분류)</label>
+                                <input
+                                    value={q}
+                                    onChange={(e) => setQ(e.target.value)}
+                                    placeholder="예: 카레, 샐러드…"
+                                    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
+                                />
+                            </div>
+
+                            <div className="sm:w-36">
+                                <label className="mb-1 block text-[11px] font-medium text-gray-600">분류</label>
+                                <select
+                                    value={cat}
+                                    onChange={(e) => setCat(e.target.value)}
+                                    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
+                                >
+                                    {categoryOptions.map(opt => (
+                                        <option key={opt} value={opt}>{opt === 'all' ? '전체' : opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="sm:w-40">
+                                <label className="mb-1 block text-[11px] font-medium text-gray-600">정렬</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={sortKey}
+                                        onChange={(e) => setSortKey(e.target.value as SortKey)}
+                                        className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
+                                    >
+                                        <option value="id">번호</option>
+                                        <option value="name">이름</option>
+                                        <option value="total">총수량</option>
+                                        <option value="registered">등록여부</option>
+                                        <option value="target">목표</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))}
+                                        className="inline-flex items-center justify-center rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+                                        title={sortDir === 'asc' ? '오름차순' : '내림차순'}
+                                        aria-label="정렬 방향"
+                                    >
+                                        {sortDir === 'asc' ? '↑' : '↓'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="shrink-0">
+                            <button
+                                type="button"
+                                onClick={resetControls}
+                                className="rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+                            >
+                                초기화
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* 저장 결과 배너 */}
             {msg && (
@@ -290,70 +511,6 @@ export default function RecipesPage() {
                     {msg.text}
                 </div>
             )}
-
-            {/* 검색 / 정렬 / 분류 드롭다운 */}
-            <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex flex-1 flex-col gap-2 sm:flex-row">
-                    <div className="sm:w-48">
-                        <label className="mb-1 block text-[11px] font-medium text-gray-600">검색(요리명/분류)</label>
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder="예: 카레, 샐러드…"
-                            className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
-                        />
-                    </div>
-
-                    <div className="sm:w-36">
-                        <label className="mb-1 block text-[11px] font-medium text-gray-600">분류</label>
-                        <select
-                            value={cat}
-                            onChange={(e) => setCat(e.target.value)}
-                            className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
-                        >
-                            {categoryOptions.map(opt => (
-                                <option key={opt} value={opt}>{opt === 'all' ? '전체' : opt}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="sm:w-40">
-                        <label className="mb-1 block text-[11px] font-medium text-gray-600">정렬</label>
-                        <div className="flex gap-2">
-                            <select
-                                value={sortKey}
-                                onChange={(e) => setSortKey(e.target.value as SortKey)}
-                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
-                            >
-                                <option value="id">번호</option>
-                                <option value="name">이름</option>
-                                <option value="total">총수량</option>
-                                <option value="registered">등록여부</option>
-                                <option value="target">목표</option>
-                            </select>
-                            <button
-                                type="button"
-                                onClick={() => setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))}
-                                className="inline-flex items-center justify-center rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
-                                title={sortDir === 'asc' ? '오름차순' : '내림차순'}
-                                aria-label="정렬 방향"
-                            >
-                                {sortDir === 'asc' ? '↑' : '↓'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="shrink-0">
-                    <button
-                        type="button"
-                        onClick={resetControls}
-                        className="rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
-                    >
-                        초기화
-                    </button>
-                </div>
-            </div>
 
             {/* 테이블 */}
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -370,7 +527,6 @@ export default function RecipesPage() {
                             <p className="text-xs text-gray-500">
                                 총 {total}개 · 등록 {registered}개 · 목표 {targetCnt}개 · 표시 {view.length}개
                             </p>
-                            {/* 레시피 저장 버튼 */}
                             <button
                                 type="submit"
                                 disabled={saving}
@@ -379,154 +535,219 @@ export default function RecipesPage() {
                                 {saving ? (
                                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                 ) : (
-                                    <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-90"><path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" /></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-90">
+                                        <path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" />
+                                    </svg>
                                 )}
                                 저장
                             </button>
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full table-auto border-separate border-spacing-0 text-sm">
-                                <thead className="sticky top-0 z-10 bg-gray-50">
-                                    <tr className="text-left text-[12px] text-gray-500">
-                                        <th className="w-12 border-b border-gray-200 px-2 py-2">No.</th>
-                                        <th className="w-16 border-b border-gray-200 px-2 py-2 text-center">목표</th>
-                                        <th className="w-16 border-b border-gray-200 px-2 py-2 text-center">등록</th>
-                                        <th className="w-24 border-b border-gray-200 px-2 py-2">분류</th>
-                                        <th className="min-w-[160px] border-b border-gray-200 px-2 py-2">요리</th>
+                        <section className="cq">
 
-                                        <th className="w-45 border-b border-gray-200 px-2 py-2">재료1</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
+                            {/* ===== 모바일: 카드 리스트 ===== */}
+                            <ul className="cq-mobile space-y-2">
+                                {view.map((r) => {
+                                    const reqTotal = getReqTotal(r.req1, r.req2, r.req3, r.req4);
+                                    const ings = [
+                                        { name: r.ingredient1, req: r.req1, need: r.need1 },
+                                        { name: r.ingredient2, req: r.req2, need: r.need2 },
+                                        { name: r.ingredient3, req: r.req3, need: r.need3 },
+                                        { name: r.ingredient4, req: r.req4, need: r.need4 },
+                                    ].filter((x) => !!x.name);
 
-                                        <th className="w-45 border-b border-gray-200 px-2 py-2">재료2</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
-
-                                        <th className="w-45 border-b border-gray-200 px-2 py-2">재료3</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
-
-                                        <th className="w-45 border-b border-gray-200 px-2 py-2">재료4</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
-                                        <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
-
-                                        <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">총</th>
-                                        <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">필요</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {view.map((r) => (
-                                        <tr key={r.id} className="hover:bg-gray-50/70 [&>td]:border-b [&>td]:border-gray-100">
-                                            <td className="px-2 py-1 text-[13px] text-gray-700">{r.id}</td>
-
-                                            {/* 목표/등록 — 작은 스위치 */}
-                                            <td className="px-2 py-1 text-center">
-                                                <SwitchSmall
-                                                    checked={r.isTarget}
-                                                    onChange={() => toggle(r.id, 'isTarget')}
-                                                    label="목표 여부"
-                                                />
-                                            </td>
-                                            <td className="px-2 py-1 text-center">
-                                                <SwitchSmall
-                                                    checked={r.isRegistered}
-                                                    onChange={() => toggle(r.id, 'isRegistered')}
-                                                    label="등록 여부"
-                                                />
-                                            </td>
-
-                                            <td className="px-2 py-1 text-[13px] text-gray-700">{r.category ?? '-'}</td>
-
-                                            <td className="px-2 py-1 text-[13px] font-medium text-gray-900 whitespace-normal break-words">
-                                                {r.name}
-                                            </td>
-
-                                            <td className="px-2 py-1 text-xs text-gray-700">
-                                                {r.ingredient1 ? (
-                                                    <div className="flex items-center gap-0.5">
-                                                        <Image
-                                                            src={`/icons/${ingredientIcon(r.ingredient1)}`}
-                                                            alt={r.ingredient1}
-                                                            width={18}
-                                                            height={18}
-                                                        />
-                                                        <span>{r.ingredient1}</span>
+                                    return (
+                                        <li key={r.id} className="rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
+                                            {/* (목표/등록 + 이름/카테고리)  |  (필요/총 배지) */}
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <SwitchSmall size="xs" checked={r.isTarget} onChange={() => toggle(r.id, 'isTarget')} label="목표" />
+                                                        <span className="text-[12px] text-gray-600">목표</span>
+                                                        <p className="pl-3 truncate [word-break:keep-all] text-sm font-semibold text-gray-900">{r.name}</p>
                                                     </div>
-                                                ) : ('-')}
-                                            </td>
-                                            <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need1 ?? 0}</td>
-                                            <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need1, r.req1)}`}>{r.req1 ?? 0}</td>
-
-                                            <td className="px-2 py-1 text-xs text-gray-700">
-                                                {r.ingredient2 ? (
-                                                    <div className="flex items-center gap-0.5">
-                                                        <Image
-                                                            src={`/icons/${ingredientIcon(r.ingredient2)}`}
-                                                            alt={r.ingredient2}
-                                                            width={18}
-                                                            height={18}
-                                                        />
-                                                        <span>{r.ingredient2}</span>
+                                                    <div className="mt-1 flex items-center gap-2 min-w-0">
+                                                        <SwitchSmall size="xs" checked={r.isRegistered} onChange={() => toggle(r.id, 'isRegistered')} label="등록" />
+                                                        <span className="text-[12px] text-gray-600">등록</span>
+                                                        <p className="pl-3 truncate [word-break:keep-all] text-xs text-gray-500">{r.category ?? '-'}</p>
                                                     </div>
-                                                ) : ('-')}
-                                            </td>
-                                            <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need2 ?? 0}</td>
-                                            <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need2, r.req2)}`}>{r.req2 ?? 0}</td>
+                                                </div>
 
-                                            <td className="px-2 py-1 text-xs text-gray-700">
-                                                {r.ingredient3 ? (
-                                                    <div className="flex items-center gap-0.5">
-                                                        <Image
-                                                            src={`/icons/${ingredientIcon(r.ingredient3)}`}
-                                                            alt={r.ingredient3}
-                                                            width={18}
-                                                            height={18}
-                                                        />
-                                                        <span>{r.ingredient3}</span>
-                                                    </div>
-                                                ) : ('-')}
-                                            </td>
-                                            <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need3 ?? 0}</td>
-                                            <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need3, r.req3)}`}>{r.req3 ?? 0}</td>
+                                                <div className="flex shrink-0 flex-col items-end gap-1 mt-0.5">
+                                                    <span className={`whitespace-nowrap w-14 text-center rounded px-2 py-0.5 text-[11px] text-gray-600 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
+                                                        필요 {reqTotal}
+                                                    </span>
+                                                    <span className={`whitespace-nowrap w-14 text-center rounded px-2 py-0.5 text-[11px] text-gray-900 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>
+                                                        총 {r.totalQuantity ?? 0}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                            <td className="px-2 py-1 text-xs text-gray-700">
-                                                {r.ingredient4 ? (
-                                                    <div className="flex items-center gap-0.5">
-                                                        <Image
-                                                            src={`/icons/${ingredientIcon(r.ingredient4)}`}
-                                                            alt={r.ingredient4}
-                                                            width={18}
-                                                            height={18}
-                                                        />
-                                                        <span>{r.ingredient4}</span>
-                                                    </div>
-                                                ) : ('-')}
-                                            </td>
-                                            <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need4 ?? 0}</td>
-                                            <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need4, r.req4)}`}>{r.req4 ?? 0}</td>
+                                            {/* 재료 및 요리실행 카드 그리드 */}
+                                            <div className="mt-2 grid grid-cols-5 gap-2">
+                                                {ings.map((ing, i) => {
+                                                    return (
+                                                        <div
+                                                            key={i}
+                                                            className={`flex h-17 flex-col items-center justify-between rounded-lg p-1 ${reqClass(ing.need, ing.req)}`}
+                                                        >
+                                                            <Image
+                                                                src={`/icons/${ingredientIcon(ing.name!)}`}
+                                                                alt={ing.name!}
+                                                                width={20}
+                                                                height={20}
+                                                                className="mt-1 bg-gray-100 rounded-full border-2 border-gray-100"
+                                                            />
+                                                            <span className="text-black text-[10px]">
+                                                                {ing.name}
+                                                            </span>
+                                                            <span className="text-black text-[12px]">
+                                                                {ing.req ?? 0}
+                                                                <span className="text-gray-500 text-[11px]"> / {ing.need}</span>
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {/* 재료가 4개 미만이면 자리를 맞추기 위한 빈 카드 */}
+                                                {Array.from({ length: Math.max(0, 4 - ings.length) }).map((_, i) => (
+                                                    <div key={`empty-${i}`} className="h-17 rounded-lg bg-gray-100" />
+                                                ))}
 
-                                            <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>{r.totalQuantity ?? 0}</td>
-                                            <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
-                                                {getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => runCooking(r)}
-                                                        disabled={cookingId === r.id}
-                                                        className="w-full text-center font-medium text-gray-900 hover:underline disabled:opacity-60"
-                                                        title="요리 실행"
-                                                    >
-                                                        {cookingId === r.id ? '요리중' : getReqTotal(r.req1, r.req2, r.req3, r.req4)}
-                                                    </button>
-                                                ) : (
-                                                    getReqTotal(r.req1, r.req2, r.req3, r.req4)
-                                                )}
-                                            </td>
+                                                {/* 요리 실행 */}
+                                                <div className="flex items-center justify-end">
+                                                    {reqTotal === 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => runCooking(r)}
+                                                            disabled={cookingId === r.id}
+                                                            className="rounded-lg border border-gray-900 bg-gray-900 px-1.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                                                            title="요리 실행"
+                                                        >
+                                                            {cookingId === r.id ? '요리중' : '요리 실행'}
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500 px-1.5">재료 필요</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+
+
+                            {/* ===== 데스크톱 ===== */}
+                            <div className="cq-desktop overflow-x-auto">
+                                <table className="w-full table-auto border-separate border-spacing-0 text-sm">
+                                    <thead className="sticky top-0 z-10 bg-gray-50">
+                                        <tr className="text-left text-[12px] text-gray-500">
+                                            <th className="w-12 border-b border-gray-200 px-2 py-2">No.</th>
+                                            <th className="w-16 border-b border-gray-200 px-2 py-2 text-center">목표</th>
+                                            <th className="w-16 border-b border-gray-200 px-2 py-2 text-center">등록</th>
+                                            <th className="w-24 border-b border-gray-200 px-2 py-2">분류</th>
+                                            <th className="min-w-[160px] border-b border-gray-200 px-2 py-2">요리</th>
+
+                                            <th className="w-45 border-b border-gray-200 px-2 py-2">재료1</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
+
+                                            <th className="w-45 border-b border-gray-200 px-2 py-2">재료2</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
+
+                                            <th className="w-45 border-b border-gray-200 px-2 py-2">재료3</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
+
+                                            <th className="w-45 border-b border-gray-200 px-2 py-2">재료4</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">요구</th>
+                                            <th className="w-12 border-b border-gray-200 px-1 py-2 text-center">필요</th>
+
+                                            <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">총</th>
+                                            <th className="w-14 border-b border-gray-200 px-2 py-2 text-center">필요</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {view.map((r) => (
+                                            <tr key={r.id} className="hover:bg-gray-50/70 [&>td]:border-b [&>td]:border-gray-100">
+                                                <td className="px-2 py-1 text-[13px] text-gray-700">{r.id}</td>
+
+                                                <td className="px-2 py-1 text-center">
+                                                    <SwitchSmall checked={r.isTarget} onChange={() => toggle(r.id, 'isTarget')} label="목표 여부" />
+                                                </td>
+                                                <td className="px-2 py-1 text-center">
+                                                    <SwitchSmall checked={r.isRegistered} onChange={() => toggle(r.id, 'isRegistered')} label="등록 여부" />
+                                                </td>
+
+                                                <td className="px-2 py-1 text-[13px] text-gray-700">{r.category ?? '-'}</td>
+                                                <td className="px-2 py-1 text-[13px] font-medium text-gray-900 whitespace-normal break-words">{r.name}</td>
+
+                                                <td className="px-2 py-1 text-xs text-gray-700">
+                                                    {r.ingredient1 ? (
+                                                        <div className="flex items-center gap-0.5">
+                                                            <Image src={`/icons/${ingredientIcon(r.ingredient1)}`} alt={r.ingredient1} width={18} height={18} />
+                                                            <span>{r.ingredient1}</span>
+                                                        </div>
+                                                    ) : ('-')}
+                                                </td>
+                                                <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need1 ?? 0}</td>
+                                                <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need1, r.req1)}`}>{r.req1 ?? 0}</td>
+
+                                                <td className="px-2 py-1 text-xs text-gray-700">
+                                                    {r.ingredient2 ? (
+                                                        <div className="flex items-center gap-0.5">
+                                                            <Image src={`/icons/${ingredientIcon(r.ingredient2)}`} alt={r.ingredient2} width={18} height={18} />
+                                                            <span>{r.ingredient2}</span>
+                                                        </div>
+                                                    ) : ('-')}
+                                                </td>
+                                                <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need2 ?? 0}</td>
+                                                <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need2, r.req2)}`}>{r.req2 ?? 0}</td>
+
+                                                <td className="px-2 py-1 text-xs text-gray-700">
+                                                    {r.ingredient3 ? (
+                                                        <div className="flex items-center gap-0.5">
+                                                            <Image src={`/icons/${ingredientIcon(r.ingredient3)}`} alt={r.ingredient3} width={18} height={18} />
+                                                            <span>{r.ingredient3}</span>
+                                                        </div>
+                                                    ) : ('-')}
+                                                </td>
+                                                <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need3 ?? 0}</td>
+                                                <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need3, r.req3)}`}>{r.req3 ?? 0}</td>
+
+                                                <td className="px-2 py-1 text-xs text-gray-700">
+                                                    {r.ingredient4 ? (
+                                                        <div className="flex items-center gap-0.5">
+                                                            <Image src={`/icons/${ingredientIcon(r.ingredient4)}`} alt={r.ingredient4} width={18} height={18} />
+                                                            <span>{r.ingredient4}</span>
+                                                        </div>
+                                                    ) : ('-')}
+                                                </td>
+                                                <td className="px-1 py-1 text-center text-xs text-gray-400">{r.need4 ?? 0}</td>
+                                                <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need4, r.req4)}`}>{r.req4 ?? 0}</td>
+
+                                                <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>{r.totalQuantity ?? 0}</td>
+                                                <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
+                                                    {getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => runCooking(r)}
+                                                            disabled={cookingId === r.id}
+                                                            className="w-full text-center font-medium text-gray-900 hover:underline disabled:opacity-60"
+                                                            title="요리 실행"
+                                                        >
+                                                            {cookingId === r.id ? '요리중' : getReqTotal(r.req1, r.req2, r.req3, r.req4)}
+                                                        </button>
+                                                    ) : (
+                                                        getReqTotal(r.req1, r.req2, r.req3, r.req4)
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     </form>
                 )}
             </div>

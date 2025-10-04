@@ -19,6 +19,21 @@
   }
 }
 
+@layer utilities {
+  .cq { container-type: inline-size; }
+
+  /* 500px 이상이면 데스크톱, 미만이면 모바일 */
+  @container (min-width: 500px) {
+    .cq-desktop { display: block; }
+    .cq-mobile  { display: none;  }
+  }
+  @container (max-width: 499px) {
+    .cq-desktop { display: none;  }
+    .cq-mobile  { display: block; }
+  }
+}
+
+
 body {
   background: var(--background);
   color: var(--foreground);

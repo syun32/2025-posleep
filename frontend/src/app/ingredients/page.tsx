@@ -55,6 +55,7 @@ export default function IngredientsPage() {
     // 요약
     const totalCount = items.length;
     const registeredCount = items.filter(i => i.isRegistered).length;
+    const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
 
     // 유틸: 문자열 비교(한글/영문 섞여도 안전)
     const strCmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
@@ -117,6 +118,28 @@ export default function IngredientsPage() {
         changeQtyById(id, (item.quantity ?? 0) - 1);
     };
 
+    // 수량 input에서 Tab/Shift+Tab 처리 → 다음/이전 수량 input으로 이동
+    const handleQtyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key !== 'Tab' || e.ctrlKey || e.metaKey) return;
+
+        e.preventDefault();
+        const visibleQtyInputs = Array.from(
+            document.querySelectorAll<HTMLInputElement>('.qty-input')
+        ).filter(el => el.offsetParent !== null);
+
+        const cur = e.currentTarget;
+        const i = visibleQtyInputs.indexOf(cur);
+        if (i === -1) return;
+
+        const next = e.shiftKey
+            ? visibleQtyInputs[i - 1] ?? visibleQtyInputs[visibleQtyInputs.length - 1]
+            : visibleQtyInputs[i + 1] ?? visibleQtyInputs[0];
+
+        next?.focus();
+        next?.select();
+    };
+
+
     // JSON 본문 생성
     const buildJsonBody = (): IngredientFormReq => ({
         rows: items.map(it => ({
@@ -156,13 +179,13 @@ export default function IngredientsPage() {
     };
 
     return (
-        <main className="mx-auto max-w-xl p-6">
+        <main className="mx-auto p-4 sm:p-6 w-full max-w-[650px]">
             {/* 상단 요약 + 저장 버튼 */}
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight">식재료</h1>
                     <p className="mt-1 text-sm text-gray-500">
-                        총 {totalCount}개 · 등록 {registeredCount}개 · 표시 {viewRows.length}개
+                        총 {totalCount}가지 · 등록 {registeredCount}가지 · 총 보유수량 {totalQuantity}개
                     </p>
                 </div>
                 <button
@@ -261,95 +284,182 @@ export default function IngredientsPage() {
                     <div className="p-12 text-center text-gray-500">조건에 맞는 항목이 없어요.</div>
                 ) : (
                     <form id="ingredients-form" onSubmit={onSubmit}>
-                        <div className="overflow-hidden">
-                            <table className="w-full table-fixed border-separate border-spacing-0">
-                                <thead className="sticky top-0 z-10 bg-gray-50">
-                                    <tr className="text-left text-sm text-gray-500">
-                                        <th className="w-10 border-b border-gray-200 px-4 py-2">No.</th>
-                                        <th className="w-30 border-b border-gray-200 px-4 py-2 text-center">등록여부</th>
-                                        <th className="border-b border-gray-200 px-4 py-2">식재료명</th>
-                                        <th className="w-44 border-b border-gray-200 px-4 py-2 text-center">보유수량</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {viewRows.map((it, viewIdx) => (
-                                        <tr key={it.id} className="group hover:bg-gray-50/70 [&>td]:border-b [&>td]:border-gray-100">
-                                            <td className="px-4 py-1 text-sm text-gray-700">
-                                                <span>{it.id}</span>
-                                            </td>
+                        <section className="cq">
 
-                                            {/* 등록여부 토글 */}
-                                            <td className="px-4 py-1 text-center">
+                            {/* ===== 모바일: 카드 리스트 (컨테이너 폭 기준) ===== */}
+                            <ul className="cq-mobile divide-y">
+                                {viewRows.map((it, viewIdx) => (
+                                    <li key={it.id} className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="shrink-0">
                                                 <SwitchSmall
                                                     checked={it.isRegistered}
                                                     onChange={() => toggleRegistered(viewIdx)}
-                                                    label="캠프 여부"
+                                                    label="등록여부"
                                                 />
-                                            </td>
-                                            <td className="px-4 py-1 text-sm font-medium text-gray-800">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2">
-                                                        <Image
-                                                            src={`/icons/${ingredientIcon(it.name)}`}
-                                                            alt={it.name}
-                                                            width={20}
-                                                            height={20}
-                                                        />
-                                                        <span>{it.name}</span>
-                                                    </div>
-                                                    {it.targetQuantity && (
-                                                        <div className="flex items-center gap-1 text-xs whitespace-nowrap">
-                                                            <span className={it.quantity >= it.targetQuantity ? "text-blue-300" : "text-red-300"}>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <Image
+                                                        src={`/icons/${ingredientIcon(it.name)}`}
+                                                        alt={it.name}
+                                                        width={24}
+                                                        height={24}
+                                                        className="shrink-0"
+                                                    />
+                                                    <p className="min-w-0 truncate [word-break:keep-all] text-sm text-black font-medium">
+                                                        {it.name}
+                                                    </p>
+                                                </div>
+                                                <div className="mt-0.5 flex items-center gap-4 text-xs text-gray-400 whitespace-nowrap">
+                                                    <span>No. {it.id}</span>
+                                                    {it.targetQuantity != null && (
+                                                        <span className="flex items-center gap-1">
+                                                            (
+                                                            <span className={it.quantity >= it.targetQuantity ? "text-blue-400" : "text-red-400"}>
                                                                 {it.quantity - it.targetQuantity}
                                                             </span>
-                                                            <span className="text-gray-500">/ {it.targetQuantity}</span>
-                                                        </div>
+                                                            <span>/ {it.targetQuantity}</span>
+                                                            )
+                                                        </span>
                                                     )}
                                                 </div>
-                                            </td>
+                                            </div>
 
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => decQty(it.id)}
+                                                    disabled={!it.isRegistered || (it.quantity ?? 0) <= 0}
+                                                    className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    aria-label="수량 감소"
+                                                    title="수량 -1"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    value={it.quantity ?? 0}
+                                                    onChange={(e) => changeQtyById(it.id, Number(e.target.value))}
+                                                    readOnly={!it.isRegistered}
+                                                    onKeyDown={handleQtyKeyDown}
+                                                    className={`qty-input h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${
+                                                        it.isRegistered
+                                                        ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
+                                                        : 'border-gray-200 bg-gray-100 text-gray-500'
+                                                        }`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => incQty(it.id)}
+                                                    disabled={!it.isRegistered}
+                                                    className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    aria-label="수량 증가"
+                                                    title="수량 +1"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
 
-                                            {/* 수량 스텝퍼 */}
-                                            <td className="px-4 py-1">
-                                                <div className="mx-auto flex w-[140px] items-center justify-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => decQty(it.id)}
-                                                        disabled={!it.isRegistered || (it.quantity ?? 0) <= 0}
-                                                        className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                                                        aria-label="수량 감소"
-                                                        title="수량 -1"
-                                                    >
-                                                        −
-                                                    </button>
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        value={it.quantity ?? 0}
-                                                        onChange={(e) => changeQtyById(it.id, Number(e.target.value))}
-                                                        readOnly={!it.isRegistered}
-                                                        className={`h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${it.isRegistered
-                                                            ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
-                                                            : 'border-gray-200 bg-gray-100 text-gray-500'
-                                                            }`}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => incQty(it.id)}
-                                                        disabled={!it.isRegistered}
-                                                        className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                                                        aria-label="수량 증가"
-                                                        title="수량 +1"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </td>
+                            {/* ===== 데스크톱: 테이블 (컨테이너 폭 기준) ===== */}
+                            <div className="cq-desktop overflow-x-auto">
+                                <table className="w-full table-auto border-separate border-spacing-0">
+                                    <thead className="sticky top-0 z-10 bg-gray-50">
+                                        <tr className="text-left text-sm text-gray-500">
+                                            <th className="w-14 border-b border-gray-200 px-4 py-2 whitespace-nowrap">No.</th>
+                                            <th className="w-20 border-b border-gray-200 px-4 py-2 text-center whitespace-nowrap">등록여부</th>
+                                            <th className="border-b border-gray-200 px-4 py-2 whitespace-nowrap">식재료명</th>
+                                            <th className="w-48 border-b border-gray-200 px-4 py-2 text-center whitespace-nowrap">보유수량</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {viewRows.map((it, viewIdx) => (
+                                            <tr key={it.id} className="group hover:bg-gray-50/70 [&>td]:border-b [&>td]:border-gray-100">
+                                                <td className="px-4 py-1 text-sm text-gray-700">{it.id}</td>
+
+                                                <td className="px-4 py-1 text-center">
+                                                    <SwitchSmall
+                                                        checked={it.isRegistered}
+                                                        onChange={() => toggleRegistered(viewIdx)}
+                                                        label="등록여부"
+                                                        size="sm"
+                                                    />
+                                                </td>
+
+                                                {/* 식재료명: 좌(아이콘+이름) / 우(차이/목표) */}
+                                                <td className="px-4 py-1 text-sm font-medium text-gray-800">
+                                                    <div className="flex items-center justify-between min-w-0">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <Image
+                                                                src={`/icons/${ingredientIcon(it.name)}`}
+                                                                alt={it.name}
+                                                                width={20}
+                                                                height={20}
+                                                                className="shrink-0"
+                                                            />
+                                                            <span className="truncate min-w-0 [word-break:keep-all]">{it.name}</span>
+                                                        </div>
+                                                        {it.targetQuantity != null && (
+                                                            <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+                                                                <span className={it.quantity >= it.targetQuantity ? "text-blue-300" : "text-red-300"}>
+                                                                    {it.quantity - it.targetQuantity}
+                                                                </span>
+                                                                <span className="text-gray-500">/ {it.targetQuantity}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                <td className="px-4 py-1">
+                                                    <div className="mx-auto flex w-[180px] items-center justify-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => decQty(it.id)}
+                                                            disabled={!it.isRegistered || (it.quantity ?? 0) <= 0}
+                                                            className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                            aria-label="수량 감소"
+                                                            title="수량 -1"
+                                                        >
+                                                            −
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min={0}
+                                                            value={it.quantity ?? 0}
+                                                            onChange={(e) => changeQtyById(it.id, Number(e.target.value))}
+                                                            readOnly={!it.isRegistered}
+                                                            onKeyDown={handleQtyKeyDown}
+                                                            className={`qty-input h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${it.isRegistered
+                                                                    ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
+                                                                    : 'border-gray-200 bg-gray-100 text-gray-500'
+                                                                }`}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => incQty(it.id)}
+                                                            disabled={!it.isRegistered}
+                                                            className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                            aria-label="수량 증가"
+                                                            title="수량 +1"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </section>
+
 
                         {/* 하단 바 */}
                         <div className="flex items-center justify-between border-t border-gray-200 px-4 py-4">
@@ -371,16 +481,17 @@ export default function IngredientsPage() {
                         </div>
                     </form>
                 )}
-            </div>
 
-            {/* 플로팅 버튼 (Recipes 페이지로 이동) */}
-            <Link
-                href="/recipes"
-                className="fixed bottom-10 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
-                title="레시피 페이지로 이동"
-            >
-                <Image src="/icons/recipe.png" alt="레시피" width={40} height={40} />
-            </Link>
-        </main>
+
+                {/* 플로팅 버튼 (Recipes 페이지로 이동) */}
+                <Link
+                    href="/recipes"
+                    className="fixed bottom-10 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+                    title="레시피 페이지로 이동"
+                >
+                    <Image src="/icons/recipe.png" alt="레시피" width={40} height={40} />
+                </Link>
+            </div>
+        </main >
     );
 }
