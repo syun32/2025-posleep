@@ -1,9 +1,26 @@
+# 의존성 및 빌드 산출물
 node_modules
 .next
 dist
+
+# VCS 설정
 .git
 .gitignore
+.github
+
+# 로그 파일
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 도커 관련
+Dockerfile*
+docker-compose*
+
+# macOS / 임시 파일
 .DS_Store
+
+# 테스트 코드
+**/*.spec.*
+**/*.test.*
