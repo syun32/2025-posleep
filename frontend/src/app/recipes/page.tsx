@@ -20,6 +20,7 @@ type Recipe = {
     ingredient4?: string | null; need4?: number | null; req4?: number | null;
 
     totalQuantity: number;
+    energy: number;
 };
 
 type PotSetting = {
@@ -29,9 +30,11 @@ type PotSetting = {
     category?: string | null;
 };
 
+type ViewRecipe = Recipe & { reqTotal?: number | null };
+
 type SaveFlagsReq = { rows: Array<Pick<Recipe, 'id' | 'isTarget' | 'isRegistered'>> };
 
-type SortKey = 'id' | 'name' | 'total' | 'registered' | 'target';
+type SortKey = 'id' | 'name' | 'total' | 'registered' | 'target' | 'reqTotal' | 'energy';
 type SortDir = 'asc' | 'desc';
 
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? '/api';
@@ -91,19 +94,35 @@ export default function RecipesPage() {
         return ['all', ...Array.from(set)];
     }, [rows]);
 
+    // 총 필요 수량 구하기
+    const getReqTotal = (req1?: number | null, req2?: number | null, req3?: number | null, req4?: number | null) => {
+        return (req1 ?? 0) + (req2 ?? 0) + (req3 ?? 0) + (req4 ?? 0);
+    }
+
+    const rowsWithReq: ViewRecipe[] = useMemo(() =>
+        rows.map(r => ({ ...r, reqTotal: getReqTotal(r.req1, r.req2, r.req3, r.req4) }))
+        , [rows]
+    );
+
     // 문자열 비교 유틸
     const sCmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
 
     // 검색 + 정렬 + 필터 적용
-    const view = useMemo(() => {
+    const view: ViewRecipe[] = useMemo(() => {
         const kw = q.trim().toLowerCase();
-        let arr = rows.filter(r => {
+        let arr = rowsWithReq.filter(r => {
             const matchQ =
                 kw === '' ||
                 r.name.toLowerCase().includes(kw) ||
                 (r.category ?? '').toLowerCase().includes(kw);
+            const matchI = 
+                kw === '' ||
+                (r.ingredient1 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient2 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient3 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient4 ?? "").toLowerCase().includes(kw)
             const matchCat = cat === 'all' || (r.category ?? '') === cat;
-            return matchQ && matchCat;
+            return (matchQ || matchI) && matchCat;
         });
 
         arr = [...arr].sort((a, b) => {
@@ -113,12 +132,14 @@ export default function RecipesPage() {
                 case 'name': cmp = sCmp(a.name, b.name); break;
                 case 'total': cmp = (a.totalQuantity ?? 0) - (b.totalQuantity ?? 0); break;
                 case 'registered': cmp = Number(a.isRegistered) - Number(b.isRegistered); break;
-                case 'target': cmp = Number(a.isTarget) - Number(b.isTarget); break;
+                case 'target': cmp = Number(a.isTarget) - Number(b.isTarget) || (b.reqTotal ?? 0) - (a.reqTotal ?? 0); break;
+                case 'reqTotal': cmp = (a.reqTotal ?? 0) - (b.reqTotal ?? 0); break;
+                case 'energy': cmp = (a.energy ?? 0) - (b.energy ?? 0); break;
             }
             return sortDir === 'asc' ? cmp : -cmp;
         });
         return arr;
-    }, [rows, q, cat, sortKey, sortDir]);
+    }, [rowsWithReq, q, cat, sortKey, sortDir]);
 
     // 셀 클래스: req 색상
     const reqClass = (need?: number | null, req?: number | null) => {
@@ -143,11 +164,6 @@ export default function RecipesPage() {
         if (t > c * 2) return 'bg-purple-300 text-black';
         if (t > c) return 'bg-yellow-300 text-black';
         return 'bg-teal-400 text-black';
-    }
-
-    // 총 필요 수량 구하기
-    const getReqTotal = (req1?: number | null, req2?: number | null, req3?: number | null, req4?: number | null) => {
-        return (req1 ?? 0) + (req2 ?? 0) + (req3 ?? 0) + (req4 ?? 0);
     }
 
     // 상태 변경
@@ -175,7 +191,7 @@ export default function RecipesPage() {
             // 성공 시 새로고침
             window.location.reload();
         } catch (e) {
-            alert('요리 실행에 실패했어요. 잠시 후 다시 시도해주세요.');
+            alert('요리 실행에 실패했어요. 잠시 후 다시 시도해주세요.' + e);
             setCookingId(null);
         }
     };
@@ -355,6 +371,8 @@ export default function RecipesPage() {
                                                 <option value="total">총수량</option>
                                                 <option value="registered">등록여부</option>
                                                 <option value="target">목표</option>
+                                                <option value="reqTotal">총필요량</option>
+                                                <option value="energy">에너지</option>
                                             </select>
                                             <button
                                                 type="button"
@@ -477,6 +495,8 @@ export default function RecipesPage() {
                                         <option value="total">총수량</option>
                                         <option value="registered">등록여부</option>
                                         <option value="target">목표</option>
+                                        <option value="reqTotal">총필요량</option>
+                                        <option value="energy">에너지</option>
                                     </select>
                                     <button
                                         type="button"
@@ -548,7 +568,6 @@ export default function RecipesPage() {
                             {/* ===== 모바일: 카드 리스트 ===== */}
                             <ul className="cq-mobile space-y-2">
                                 {view.map((r) => {
-                                    const reqTotal = getReqTotal(r.req1, r.req2, r.req3, r.req4);
                                     const ings = [
                                         { name: r.ingredient1, req: r.req1, need: r.need1 },
                                         { name: r.ingredient2, req: r.req2, need: r.need2 },
@@ -570,12 +589,13 @@ export default function RecipesPage() {
                                                         <SwitchSmall size="xs" checked={r.isRegistered} onChange={() => toggle(r.id, 'isRegistered')} label="등록" />
                                                         <span className="text-[12px] text-gray-600">등록</span>
                                                         <p className="pl-3 truncate [word-break:keep-all] text-xs text-gray-500">{r.category ?? '-'}</p>
+                                                        <p className={`truncate text-xs ${r.reqTotal == 0 ? "text-teal-500" : "text-gray-500"}`}>( {r.energy ?? '-'} )</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex shrink-0 flex-col items-end gap-1 mt-0.5">
-                                                    <span className={`whitespace-nowrap w-14 text-center rounded px-2 py-0.5 text-[11px] text-gray-600 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
-                                                        필요 {reqTotal}
+                                                    <span className={`whitespace-nowrap w-14 text-center rounded px-2 py-0.5 text-[11px] text-gray-600 ${r.reqTotal == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
+                                                        필요 {r.reqTotal}
                                                     </span>
                                                     <span className={`whitespace-nowrap w-14 text-center rounded px-2 py-0.5 text-[11px] text-gray-900 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>
                                                         총 {r.totalQuantity ?? 0}
@@ -598,7 +618,7 @@ export default function RecipesPage() {
                                                                 height={20}
                                                                 className="mt-1 bg-gray-100 rounded-full border-2 border-gray-100"
                                                             />
-                                                            <span className="text-black text-[10px]">
+                                                            <span className="text-black text-[9px]">
                                                                 {ing.name}
                                                             </span>
                                                             <span className="text-black text-[12px]">
@@ -615,18 +635,18 @@ export default function RecipesPage() {
 
                                                 {/* 요리 실행 */}
                                                 <div className="flex items-center justify-end">
-                                                    {reqTotal === 0 ? (
+                                                    {r.reqTotal === 0 ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => runCooking(r)}
                                                             disabled={cookingId === r.id}
-                                                            className="rounded-lg border border-gray-900 bg-gray-900 px-1.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                                                            className="rounded-lg border border-gray-900 bg-gray-900 px-1.5 py-1.5 text-[10px] font-medium text-white disabled:opacity-60"
                                                             title="요리 실행"
                                                         >
                                                             {cookingId === r.id ? '요리중' : '요리 실행'}
                                                         </button>
                                                     ) : (
-                                                        <span className="text-xs text-gray-500 px-1.5">재료 필요</span>
+                                                        <span className="text-[10px] text-gray-500 px-1.5">재료 필요</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -680,7 +700,10 @@ export default function RecipesPage() {
                                                 </td>
 
                                                 <td className="px-2 py-1 text-[13px] text-gray-700">{r.category ?? '-'}</td>
-                                                <td className="px-2 py-1 text-[13px] font-medium text-gray-900 whitespace-normal break-words">{r.name}</td>
+                                                <td className="px-2 py-1 break-words whitespace-normal">
+                                                    <p className="text-[13px] font-medium text-gray-900">{r.name}</p>
+                                                    <p className={`text-[10px] ${r.reqTotal == 0 ? "text-teal-500" : "text-gray-500"}`}>({r.energy})</p>
+                                                </td>
 
                                                 <td className="px-2 py-1 text-xs text-gray-700">
                                                     {r.ingredient1 ? (
@@ -727,8 +750,8 @@ export default function RecipesPage() {
                                                 <td className={`px-1 py-1 text-center text-xs rounded ${reqClass(r.need4, r.req4)}`}>{r.req4 ?? 0}</td>
 
                                                 <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${capClass(r.totalQuantity, pot.capacity, pot.isCamping)}`}>{r.totalQuantity ?? 0}</td>
-                                                <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
-                                                    {getReqTotal(r.req1, r.req2, r.req3, r.req4) == 0 ? (
+                                                <td className={`px-2 py-1 text-center text-[13px] rounded text-gray-800 ${r.reqTotal == 0 ? "bg-teal-400" : "bg-gray-300"}`}>
+                                                    {r.reqTotal == 0 ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => runCooking(r)}
@@ -736,10 +759,10 @@ export default function RecipesPage() {
                                                             className="w-full text-center font-medium text-gray-900 hover:underline disabled:opacity-60"
                                                             title="요리 실행"
                                                         >
-                                                            {cookingId === r.id ? '요리중' : getReqTotal(r.req1, r.req2, r.req3, r.req4)}
+                                                            {cookingId === r.id ? '요리중' : r.reqTotal}
                                                         </button>
                                                     ) : (
-                                                        getReqTotal(r.req1, r.req2, r.req3, r.req4)
+                                                        r.reqTotal
                                                     )}
                                                 </td>
                                             </tr>

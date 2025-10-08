@@ -26,4 +26,6 @@ public interface RecipeSheetRow {
 
     boolean getIsRegistered();
     boolean getIsTarget();
+
+    Integer getEnergy();
 }
