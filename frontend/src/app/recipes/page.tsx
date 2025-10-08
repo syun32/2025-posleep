@@ -114,8 +114,14 @@ export default function RecipesPage() {
                 kw === '' ||
                 r.name.toLowerCase().includes(kw) ||
                 (r.category ?? '').toLowerCase().includes(kw);
+            const matchI = 
+                kw === '' ||
+                (r.ingredient1 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient2 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient3 ?? "").toLowerCase().includes(kw) ||
+                (r.ingredient4 ?? "").toLowerCase().includes(kw)
             const matchCat = cat === 'all' || (r.category ?? '') === cat;
-            return matchQ && matchCat;
+            return (matchQ || matchI) && matchCat;
         });
 
         arr = [...arr].sort((a, b) => {
