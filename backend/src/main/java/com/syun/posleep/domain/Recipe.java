@@ -33,14 +33,18 @@ public class Recipe {
     @Column(name = "is_target", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isTarget = false;
 
+    @Column(name = "energy")
+    private Integer energy;
+
     protected Recipe() {}
 
-    public Recipe(String name, String category, boolean isRegistered, Integer totalQuantity, boolean isTarget) {
+    public Recipe(String name, String category, boolean isRegistered, Integer totalQuantity, boolean isTarget, Integer energy) {
         this.name = name;
         this.category = category;
         this.isRegistered = isRegistered;
         this.totalQuantity = totalQuantity;
         this.isTarget = isTarget;
+        this.energy = energy;
     }
 
     /* --- Getter / Setter --- */
@@ -69,6 +73,10 @@ public class Recipe {
         return isTarget;
     }
 
+    public Integer getEnergy() {
+        return energy;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -87,5 +95,9 @@ public class Recipe {
 
     public void setIsTarget(boolean isTarget) {
         this.isTarget = isTarget;
+    }
+
+    public void setEnergy(Integer energy) {
+        this.energy = energy;
     }
 }
