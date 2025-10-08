@@ -51,7 +51,8 @@ public interface RecipeQueryRepository extends JpaRepository<Recipe, Integer> {
                 ELSE 0
             END AS req4,
 
-            r.total_quantity           AS totalQuantity
+            r.total_quantity           AS totalQuantity,
+            r.energy                   AS energy
         FROM recipe r
         LEFT JOIN recipe_ingredient ri1 ON ri1.recipe_id = r.id AND ri1.position = 1
         LEFT JOIN ingredient        i1  ON i1.id          = ri1.ingredient_id

@@ -20,6 +20,7 @@ type Recipe = {
     ingredient4?: string | null; need4?: number | null; req4?: number | null;
 
     totalQuantity: number;
+    energy: number;
 };
 
 type PotSetting = {
@@ -33,7 +34,7 @@ type ViewRecipe = Recipe & { reqTotal?: number | null };
 
 type SaveFlagsReq = { rows: Array<Pick<Recipe, 'id' | 'isTarget' | 'isRegistered'>> };
 
-type SortKey = 'id' | 'name' | 'total' | 'registered' | 'target' | 'reqTotal';
+type SortKey = 'id' | 'name' | 'total' | 'registered' | 'target' | 'reqTotal' | 'energy';
 type SortDir = 'asc' | 'desc';
 
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? '/api';
@@ -131,8 +132,9 @@ export default function RecipesPage() {
                 case 'name': cmp = sCmp(a.name, b.name); break;
                 case 'total': cmp = (a.totalQuantity ?? 0) - (b.totalQuantity ?? 0); break;
                 case 'registered': cmp = Number(a.isRegistered) - Number(b.isRegistered); break;
-                case 'target': cmp = Number(a.isTarget) - Number(b.isTarget); break;
+                case 'target': cmp = Number(a.isTarget) - Number(b.isTarget) || (b.reqTotal ?? 0) - (a.reqTotal ?? 0); break;
                 case 'reqTotal': cmp = (a.reqTotal ?? 0) - (b.reqTotal ?? 0); break;
+                case 'energy': cmp = (a.energy ?? 0) - (b.energy ?? 0); break;
             }
             return sortDir === 'asc' ? cmp : -cmp;
         });
@@ -370,6 +372,7 @@ export default function RecipesPage() {
                                                 <option value="registered">등록여부</option>
                                                 <option value="target">목표</option>
                                                 <option value="reqTotal">총필요량</option>
+                                                <option value="energy">에너지</option>
                                             </select>
                                             <button
                                                 type="button"
@@ -493,6 +496,7 @@ export default function RecipesPage() {
                                         <option value="registered">등록여부</option>
                                         <option value="target">목표</option>
                                         <option value="reqTotal">총필요량</option>
+                                        <option value="energy">에너지</option>
                                     </select>
                                     <button
                                         type="button"
@@ -585,6 +589,7 @@ export default function RecipesPage() {
                                                         <SwitchSmall size="xs" checked={r.isRegistered} onChange={() => toggle(r.id, 'isRegistered')} label="등록" />
                                                         <span className="text-[12px] text-gray-600">등록</span>
                                                         <p className="pl-3 truncate [word-break:keep-all] text-xs text-gray-500">{r.category ?? '-'}</p>
+                                                        <p className={`truncate text-xs ${r.reqTotal == 0 ? "text-teal-500" : "text-gray-500"}`}>( {r.energy ?? '-'} )</p>
                                                     </div>
                                                 </div>
 
@@ -695,7 +700,10 @@ export default function RecipesPage() {
                                                 </td>
 
                                                 <td className="px-2 py-1 text-[13px] text-gray-700">{r.category ?? '-'}</td>
-                                                <td className="px-2 py-1 text-[13px] font-medium text-gray-900 whitespace-normal break-words">{r.name}</td>
+                                                <td className="px-2 py-1 break-words whitespace-normal">
+                                                    <p className="text-[13px] font-medium text-gray-900">{r.name}</p>
+                                                    <p className={`text-[10px] ${r.reqTotal == 0 ? "text-teal-500" : "text-gray-500"}`}>({r.energy})</p>
+                                                </td>
 
                                                 <td className="px-2 py-1 text-xs text-gray-700">
                                                     {r.ingredient1 ? (
