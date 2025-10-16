@@ -34,6 +34,13 @@ export default function IngredientsPage() {
     const [sortKey, setSortKey] = useState<SortKey>('id');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
+    // ocr
+    const [ocrOpen, setOcrOpen] = useState(false);
+    const [ocrUploading, setOcrUploading] = useState(false);
+    const [ocrFile, setOcrFile] = useState<File | null>(null);
+    const [ocrPreview, setOcrPreview] = useState<string | null>(null);
+
+
     // 목록 조회
     useEffect(() => {
         (async () => {
@@ -151,6 +158,33 @@ export default function IngredientsPage() {
         })),
     });
 
+    /* ---- [OCR] start ---- */
+    const onPickOcrFile = (f?: File) => {
+        if (!f) return;
+        setOcrFile(f);
+        setOcrPreview(URL.createObjectURL(f));
+    }
+
+    const callOcr = async () => {
+        if (!ocrFile || ocrUploading) return;
+        try {
+            setOcrUploading(true);
+            const form = new FormData();
+            form.append("image", ocrFile);
+            const res = await fetch(`${BASE}/ingredients/ocr`, {
+                method: "POST",
+                body: form,
+            });
+            if (!res.ok) throw new Error("OCR Failed");
+            window.location.reload();
+        } catch (e) {
+            console.error(e);
+            alert("이미지 업로드에 실패했어요. 다시 시도해주세요.");
+            setOcrUploading(false);
+        }
+    }
+    /* ---- [OCR] end ---- */
+
     // 저장
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -180,7 +214,7 @@ export default function IngredientsPage() {
 
     return (
         <main className="mx-auto p-4 sm:p-6 w-full max-w-[650px]">
-            {/* 상단 요약 + 저장 버튼 */}
+            {/* 상단 요약 + 업로드/저장 버튼 */}
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight">식재료</h1>
@@ -188,21 +222,36 @@ export default function IngredientsPage() {
                         총 {totalCount}가지 · 등록 {registeredCount}가지 · 총 보유수량 {totalQuantity}개
                     </p>
                 </div>
-                <button
-                    form="ingredients-form"
-                    type="submit"
-                    disabled={saving || loading}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {saving ? (
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
+                <div className="flex items-center gap-2">
+                    {/* 업로드 버튼 */}
+                    <button
+                        type="button"
+                        onClick={() => setOcrOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-700 px-4 py-2 text-white shadow-sm transition hover:bg-gray-50"
+                        title="OCR 업로드"
+                    >
                         <svg width="16" height="16" viewBox="0 0 24 24" className="opacity-90">
-                            <path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" />
+                            <path fill="currentColor" d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4zM11 16h2V8l3.5 3.5l1.42-1.42L12 4.66L7.08 10.08L8.5 11.5L11 9z" />
                         </svg>
-                    )}
-                    저장
-                </button>
+                        업로드
+                    </button>
+                    {/* 저장 버튼 */}
+                    <button
+                        form="ingredients-form"
+                        type="submit"
+                        disabled={saving || loading}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {saving ? (
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" className="opacity-90">
+                                <path fill="currentColor" d="M17 3H7a2 2 0 0 0-2 2v14l7-3l7 3V5a2 2 0 0 0-2-2" />
+                            </svg>
+                        )}
+                        저장
+                    </button>
+                </div>
             </div>
 
             {/* 메시지 배너 */}
@@ -345,8 +394,7 @@ export default function IngredientsPage() {
                                                     onChange={(e) => changeQtyById(it.id, Number(e.target.value))}
                                                     readOnly={!it.isRegistered}
                                                     onKeyDown={handleQtyKeyDown}
-                                                    className={`qty-input h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${
-                                                        it.isRegistered
+                                                    className={`qty-input h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${it.isRegistered
                                                         ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
                                                         : 'border-gray-200 bg-gray-100 text-gray-500'
                                                         }`}
@@ -436,8 +484,8 @@ export default function IngredientsPage() {
                                                             readOnly={!it.isRegistered}
                                                             onKeyDown={handleQtyKeyDown}
                                                             className={`qty-input h-9 w-16 rounded-lg border text-center text-sm outline-none focus:ring-2 ${it.isRegistered
-                                                                    ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
-                                                                    : 'border-gray-200 bg-gray-100 text-gray-500'
+                                                                ? 'border-gray-300 focus:border-gray-900 text-black focus:ring-gray-200'
+                                                                : 'border-gray-200 bg-gray-100 text-gray-500'
                                                                 }`}
                                                         />
                                                         <button
@@ -492,6 +540,85 @@ export default function IngredientsPage() {
                     <Image src="/icons/recipe.png" alt="레시피" width={40} height={40} />
                 </Link>
             </div>
+
+            {/* OCR 업로드 모달 */}
+            {ocrOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => !ocrUploading && setOcrOpen(false)} />
+                    <div className="relative z-10 w-[min(92vw,560px)] rounded-2xl bg-white p-5 shadow-2xl">
+                        <div className="mb-2 flex items-center justify-between">
+                            <h2 className="text-lg text-gray-700 font-semibold">이미지 업로드</h2>
+                            <button
+                                onClick={() => !ocrUploading && setOcrOpen(false)}
+                                className="rounded-lg p-2 hover:bg-gray-100"
+                                aria-label="닫기"
+                                disabled={ocrUploading}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="block">
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        id="ocr-file-input"
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={(e) => onPickOcrFile(e.target.files?.[0] ?? undefined)}
+                                        className="hidden"
+                                        disabled={ocrUploading}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => document.getElementById("ocr-file-input")?.click()}
+                                        disabled={ocrUploading}
+                                        className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        파일 선택
+                                    </button>
+                                    <span className="text-sm text-gray-500">
+                                        {ocrFile ? ocrFile.name : "선택된 파일 없음"}
+                                    </span>
+                                </div>
+                            </label>
+
+
+                            {ocrPreview && (
+                                <div className="rounded-xl border bg-gray-50 p-2">
+                                    <img src={ocrPreview} alt="preview" className="mx-auto max-h-72 rounded-md" />
+                                </div>
+                            )}
+
+                            <span className="block text-xs text-gray-400">이미지를 업로드하여 재료 수량을 업데이트합니다.</span>
+                            <div className="flex items-center justify-end">
+                                <button
+                                    type="button"
+                                    onClick={callOcr}
+                                    disabled={!ocrFile || ocrUploading}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-900 bg-gray-900 px-4 py-2 text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {ocrUploading ? (
+                                        <>
+                                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            업로드/분석 중…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" className="opacity-90">
+                                                <path fill="currentColor" d="M5 20h14v-2H5v2M19 8h-4V2H9v6H5l7 7l7-7z" />
+                                            </svg>
+                                            업로드/분석
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </main >
     );
 }
