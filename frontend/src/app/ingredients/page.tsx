@@ -565,7 +565,6 @@ export default function IngredientsPage() {
                                         id="ocr-file-input"
                                         type="file"
                                         accept="image/*"
-                                        capture="environment"
                                         onChange={(e) => onPickOcrFile(e.target.files?.[0] ?? undefined)}
                                         className="hidden"
                                         disabled={ocrUploading}
