@@ -140,12 +140,6 @@ jobs:
       - name: Checkout (compose & infra files)
         uses: actions/checkout@v4
 
-      - name: Write Vision SA key to file
-        shell: bash
-        run: |
-          mkdir -p ./secrets
-          printf '%s' "${{ secrets.VISION_SA_JSON }}" > ./secrets/vision-sa.json
-
       - name: Copy infra files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -155,16 +149,6 @@ jobs:
           source: "infra/docker-compose.yml,infra/nginx/nginx.conf,infra/.env.example"
           target: "/srv/posleep"
           strip_components: 1
-          overwrite: true
-
-      - name: Copy Vision key to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "secrets/vision-sa.json"
-          target: "/opt/posleep/keys"
           overwrite: true
 
       - name: SSH & deploy
@@ -190,13 +174,6 @@ jobs:
               cp .env.example .env || true
               echo "WARNING: Created placeholder .env. Fill real secrets on EC2."
             fi
-            sudo touch /opt/posleep/app.env
-            if sudo grep -q '^GOOGLE_APPLICATION_CREDENTIALS=' /opt/posleep/app.env; then
-              sudo sed -i 's|^GOOGLE_APPLICATION_CREDENTIALS=.*|GOOGLE_APPLICATION_CREDENTIALS=/opt/posleep/keys/vision-sa.json|' /opt/posleep/app.env
-            else
-              echo 'GOOGLE_APPLICATION_CREDENTIALS=/opt/posleep/keys/vision-sa.json' | sudo tee -a /opt/posleep/app.env >/dev/null
-            fi
-            cd /srv/posleep
             docker compose pull
             docker compose up -d
             docker image prune -f

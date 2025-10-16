@@ -3,7 +3,10 @@ services:
   api:
     image: syun32/posleep-api:prod
     container_name: posleep-api
-    env_file: .env
+    env_file:
+      - /opt/posleep/app.env
+    volumes:
+      - /opt/posleep/keys:/opt/posleep/keys:ro
     expose:
       - "8080"
     restart: unless-stopped
