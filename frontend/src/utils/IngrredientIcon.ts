@@ -10,7 +10,7 @@ export const ingredientIcon = (name: string) => {
         튼튼밀크: "milk.png",
         달콤한꿀: "honey.png",
         퓨어오일: "oil.png",
-        따뜻한생강: "ginger.png",
+        따듯한생강: "ginger.png",
         숙면토마토: "tomato.png",
         릴랙스카카오: "cacao.png",
         맛있는꼬리: "tail.png",
