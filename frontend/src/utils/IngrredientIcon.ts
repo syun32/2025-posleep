@@ -18,6 +18,7 @@ export const ingredientIcon = (name: string) => {
         연둣빛옥수수: "corn.png",
         각성원두: "coffeebeans.png",
         묵직한호박: "pumpkin.png",
+        반들반들아보카도: "avocado.png",
     };
     return map[name] ?? "default.png";
 };
