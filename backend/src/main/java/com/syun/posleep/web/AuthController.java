@@ -2,6 +2,7 @@ package com.syun.posleep.web;
 
 import com.syun.posleep.domain.User;
 import com.syun.posleep.dto.request.LoginRequest;
+import com.syun.posleep.dto.request.SignUpRequest;
 import com.syun.posleep.dto.response.LoginResponse;
 import com.syun.posleep.repository.UserRepository;
 import com.syun.posleep.security.jwt.JwtTokenProvider;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -49,5 +52,26 @@ public class AuthController {
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> signUp(@RequestBody SignUpRequest request) {
+        log.info("SignUp: ID={}", request.getName());
+
+        if (userRepository.existsByName(request.getName())) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body("이미 사용 중인 아이디입니다.");
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = new User(request.getName(), encodedPassword);
+
+        userRepository.save(user);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("회원가입이 완료되었습니다.");
     }
 }
