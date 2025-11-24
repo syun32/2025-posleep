@@ -6,6 +6,8 @@ import Image from 'next/image';
 import SwitchSmall from '@/components/ui/SwitchSmall';
 import { ingredientIcon } from '@/utils/IngrredientIcon';
 import { ApiResponse } from "@/types/api"
+import { apiFetch } from '@/lib/api';
+import LogoutButton from '@/components/LogoutButton';
 
 type Ingredient = {
     id: number;
@@ -20,8 +22,6 @@ type IngredientFormReq = { rows: Ingredient[] };
 type StatusFilter = 'all' | 'registered' | 'unregistered';
 type SortKey = 'id' | 'name' | 'quantity' | 'registered';
 type SortDir = 'asc' | 'desc';
-
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? '/api';
 
 export default function IngredientsPage() {
     const [items, setItems] = useState<Ingredient[]>([]);
@@ -46,7 +46,7 @@ export default function IngredientsPage() {
         (async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${BASE}/ingredients`, { cache: 'no-store' });
+                const res = await apiFetch("/ingredients");
                 if (!res.ok) throw new Error();
                 const json: ApiResponse<Ingredient[]> = await res.json();
                 const data: Ingredient[] = json.data;
@@ -171,7 +171,7 @@ export default function IngredientsPage() {
             setOcrUploading(true);
             const form = new FormData();
             form.append("image", ocrFile);
-            const res = await fetch(`${BASE}/ingredients/ocr`, {
+            const res = await apiFetch("/ingredients/ocr", {
                 method: "POST",
                 body: form,
             });
@@ -192,7 +192,7 @@ export default function IngredientsPage() {
         setSaving(true);
         try {
             const body = buildJsonBody();
-            const res = await fetch(`${BASE}/ingredients/update`, {
+            const res = await apiFetch("/ingredients/update", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -527,18 +527,30 @@ export default function IngredientsPage() {
                                 저장
                             </button>
                         </div>
+                        <div className="flex flex-col items-center p-4">
+                            <LogoutButton />
+                        </div>
                     </form>
                 )}
 
+                {/* 플로팅 버튼 */}
+                <div className="fixed bottom-10 left-6">
+                    <Link
+                        href="/"
+                        className="fixed bottom-28 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+                        title="홈 페이지로 이동"
+                    >
+                        <Image src="/icon.ico" alt="홈" width={30} height={30} />
+                    </Link>
 
-                {/* 플로팅 버튼 (Recipes 페이지로 이동) */}
-                <Link
-                    href="/recipes"
-                    className="fixed bottom-10 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
-                    title="레시피 페이지로 이동"
-                >
-                    <Image src="/icons/recipe.png" alt="레시피" width={40} height={40} />
-                </Link>
+                    <Link
+                        href="/recipes"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+                        title="레시피 페이지로 이동"
+                    >
+                        <Image src="/icons/recipe.png" alt="레시피" width={40} height={40} />
+                    </Link>
+                </div>
             </div>
 
             {/* OCR 업로드 모달 */}
