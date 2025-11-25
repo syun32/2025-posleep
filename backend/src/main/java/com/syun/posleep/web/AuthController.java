@@ -1,11 +1,13 @@
 package com.syun.posleep.web;
 
+import com.syun.posleep.domain.Pot;
 import com.syun.posleep.domain.User;
 import com.syun.posleep.dto.request.LoginRequest;
 import com.syun.posleep.dto.request.SignUpRequest;
 import com.syun.posleep.dto.response.LoginResponse;
 import com.syun.posleep.repository.UserRepository;
 import com.syun.posleep.security.jwt.JwtTokenProvider;
+import com.syun.posleep.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
@@ -66,9 +69,7 @@ public class AuthController {
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        User user = new User(request.getName(), encodedPassword);
-
-        userRepository.save(user);
+        authService.register(request.getName(), encodedPassword);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

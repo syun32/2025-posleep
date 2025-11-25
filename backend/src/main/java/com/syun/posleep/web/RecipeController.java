@@ -4,10 +4,12 @@ import com.syun.posleep.domain.Pot;
 import com.syun.posleep.dto.request.RecipeForm;
 import com.syun.posleep.dto.response.ApiResponse;
 import com.syun.posleep.query.RecipeSheetRow;
+import com.syun.posleep.security.jwt.CustomUserDetails;
 import com.syun.posleep.service.CookingService;
 import com.syun.posleep.service.RecipeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,14 +29,15 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ApiResponse<List<RecipeSheetRow>> getRecipes() {
-        List<RecipeSheetRow> list = recipeService.findRecipeSheet();
+    public ApiResponse<List<RecipeSheetRow>> getRecipes(@AuthenticationPrincipal CustomUserDetails user) {
+        Integer userId = user.getUserId();
+        List<RecipeSheetRow> list = recipeService.findRecipeSheet(userId);
         return ApiResponse.success(list);
     }
 
     @GetMapping("/pots")
-    public ApiResponse<Pot> getPot() {
-        Pot pot = recipeService.getSinglePotOrNull();
+    public ApiResponse<Pot> getPot(@AuthenticationPrincipal CustomUserDetails user) {
+        Pot pot = recipeService.getSinglePotOrNull(user.getUserId());
         return ApiResponse.success(pot);
     }
 
@@ -42,8 +45,9 @@ public class RecipeController {
             path = "/flags",
             consumes = "application/json"
     )
-    public ResponseEntity<?> saveFlags(@RequestBody RecipeForm form) {
-        int changed = recipeService.updateFlags(form);
+    public ResponseEntity<?> saveFlags(@RequestBody RecipeForm form, @AuthenticationPrincipal CustomUserDetails user) {
+        Integer userId = user.getUserId();
+        int changed = recipeService.updateFlags(form, userId);
         return ResponseEntity.ok(Map.of("changed", changed));
     }
 
@@ -51,8 +55,8 @@ public class RecipeController {
             path = "/pots",
             consumes = "application/json"
     )
-    public ResponseEntity<?> savePot(@RequestBody Pot pot) {
-        recipeService.updatePot(pot.getId(), pot.getCapacity(), pot.getIsCamping(), pot.getCategory());
+    public ResponseEntity<?> savePot(@RequestBody Pot pot, @AuthenticationPrincipal CustomUserDetails user) {
+        recipeService.updatePot(user.getUserId(), pot.getCapacity(), pot.getIsCamping(), pot.getCategory());
         return ResponseEntity.ok().build();
     }
 
@@ -60,8 +64,9 @@ public class RecipeController {
             path = "/cook",
             consumes = "application/json"
     )
-    public ResponseEntity<?> cook(@RequestBody Integer recipeId) {
-        cookingService.runCooking(recipeId);
+    public ResponseEntity<?> cook(@RequestBody Integer recipeId, @AuthenticationPrincipal CustomUserDetails user) {
+        Integer userId = user.getUserId();
+        cookingService.runCooking(recipeId, userId);
         return ResponseEntity.ok().build();
     }
 }

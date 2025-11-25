@@ -11,26 +11,24 @@ public interface IngredientQueryRepository extends JpaRepository<Recipe, Integer
 
         @Query(value = """
         SELECT
-            ui.ingredient_id     AS id,
-            i.name               AS name,
-            ui.is_registered     AS isRegistered,
-            ui.quantity          AS quantity,
+            ui.ingredient_id    AS id,
+            i.name              AS name,
+            ui.is_registered    AS isRegistered,
+            ui.quantity         AS quantity,
             t.sum_quantity      AS target_quantity
         FROM user_ingredient ui
-                 LEFT OUTER JOIN (
-                                    SELECT
-                                        ri.ingredient_id	as ingredient_id,
-                                        SUM(quantity)		as sum_quantity
+                 LEFT OUTER JOIN (  SELECT
+                                        ri.ingredient_id        as ingredient_id,
+                                        SUM(ri.quantity)        as sum_quantity
                                     FROM recipe_ingredient ri
-                                             LEFT OUTER JOIN recipe r
-                                                             ON ri.recipe_id = r.id
-                                    WHERE r.is_target
-                                      AND r.category = (SELECT category FROM pot WHERE id = 1)
-                                    GROUP BY ri.ingredient_id
-                                ) AS t
-                ON ui.id = t.ingredient_id
+                                        LEFT OUTER JOIN recipe r           ON ri.recipe_id = r.id
+                                        LEFT OUTER JOIN user_recipe ur     ON ur.recipe_id = r.id  AND ur.user_id = :userId
+                                    WHERE r.category = (SELECT category FROM pot WHERE user_id = :userId)
+                                        AND ur.is_target
+                                    GROUP BY ri.ingredient_id   ) AS t
+                    ON ui.ingredient_id = t.ingredient_id
                 LEFT OUTER JOIN ingredient i
-                ON ui.ingredient_id = i.id
+                    ON ui.ingredient_id = i.id
         WHERE ui.user_id = :userId
         ORDER BY ui.id
         """, nativeQuery = true)
