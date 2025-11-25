@@ -6,6 +6,8 @@ import Image from 'next/image';
 import SwitchSmall from '@/components/ui/SwitchSmall';
 import { ingredientIcon } from '@/utils/IngrredientIcon';
 import { ApiResponse } from '@/types/api';
+import { apiFetch } from '@/lib/api';
+import LogoutButton from '@/components/LogoutButton';
 
 type Recipe = {
     id: number;
@@ -37,8 +39,6 @@ type SaveFlagsReq = { rows: Array<Pick<Recipe, 'id' | 'isTarget' | 'isRegistered
 type SortKey = 'id' | 'name' | 'total' | 'registered' | 'target' | 'reqTotal' | 'energy';
 type SortDir = 'asc' | 'desc';
 
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? '/api';
-
 export default function RecipesPage() {
     const [rows, setRows] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,8 +62,8 @@ export default function RecipesPage() {
             try {
                 setLoading(true);
                 const [resRecipe, resPot] = await Promise.all([
-                    fetch(`${BASE}/recipes`, { cache: 'no-store' }),
-                    fetch(`${BASE}/recipes/pots`, { cache: 'no-store' }),
+                    apiFetch("/recipes"),
+                    apiFetch("/recipes/pots"),
                 ]);
                 if (!resRecipe.ok || !resPot.ok) throw new Error();
                 const dataRecipe: ApiResponse<Recipe[]> = await resRecipe.json();
@@ -115,7 +115,7 @@ export default function RecipesPage() {
                 kw === '' ||
                 r.name.toLowerCase().includes(kw) ||
                 (r.category ?? '').toLowerCase().includes(kw);
-            const matchI = 
+            const matchI =
                 kw === '' ||
                 (r.ingredient1 ?? "").toLowerCase().includes(kw) ||
                 (r.ingredient2 ?? "").toLowerCase().includes(kw) ||
@@ -181,7 +181,7 @@ export default function RecipesPage() {
 
         try {
             setCookingId(r.id);
-            const res = await fetch(`${BASE}/recipes/cook`, {
+            const res = await apiFetch("/recipes/cook", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(r.id),
@@ -205,7 +205,7 @@ export default function RecipesPage() {
             const body: SaveFlagsReq = {
                 rows: rows.map(r => ({ id: r.id, isTarget: r.isTarget, isRegistered: r.isRegistered })),
             };
-            const res = await fetch(`${BASE}/recipes/flags`, {
+            const res = await apiFetch("/recipes/flags", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -225,7 +225,7 @@ export default function RecipesPage() {
         try {
             setMsg(null);
             setPotSaving(true);
-            const res = await fetch(`${BASE}/recipes/pots`, {
+            const res = await apiFetch("/recipes/pots", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pot),
@@ -771,18 +771,31 @@ export default function RecipesPage() {
                                 </table>
                             </div>
                         </section>
+                        <div className="flex flex-col items-center p-4">
+                            <LogoutButton />
+                        </div>
                     </form>
                 )}
             </div>
 
-            {/* 플로팅 버튼 (Ingredients 페이지로 이동) */}
-            <Link
-                href="/ingredients"
-                className="fixed bottom-10 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
-                title="레시피 페이지로 이동"
-            >
-                <Image src="/icons/apple.png" alt="식재료" width={35} height={35} />
-            </Link>
+            {/* 플로팅 버튼 */}
+            <div className="fixed bottom-10 left-6">
+                <Link
+                    href="/"
+                    className="fixed bottom-28 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+                    title="홈 페이지로 이동"
+                >
+                    <Image src="/icon.ico" alt="홈" width={30} height={30} />
+                </Link>
+
+                <Link
+                    href="/ingredients"
+                    className="fixed bottom-10 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+                    title="레시피 페이지로 이동"
+                >
+                    <Image src="/icons/apple.png" alt="식재료" width={35} height={35} />
+                </Link>
+            </div>
         </main>
     );
 }

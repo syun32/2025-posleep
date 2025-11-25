@@ -1,5 +1,6 @@
 package com.syun.posleep.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -10,8 +11,13 @@ import jakarta.validation.constraints.Size;
 public class Pot {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Integer userId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_pot_user"))
+    @JsonIgnore
+    private User user;
 
     @Min(0)
     @Column(nullable = false)
@@ -20,14 +26,14 @@ public class Pot {
     @Column(name = "is_camping", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isCamping = false;
 
-    @NotBlank
     @Size(max = 255)
     @Column(nullable = false, length = 255)
     private String category = "";
 
     protected Pot() {}
 
-    public Pot(Integer capacity, boolean isCamping, String category) {
+    public Pot(User user, Integer capacity, boolean isCamping, String category) {
+        this.user = user;
         this.capacity = capacity;
         this.isCamping = isCamping;
         this.category = category;
@@ -36,8 +42,10 @@ public class Pot {
     /* --- Getter / Setter --- */
 
     public Integer getId() {
-        return id;
+        return userId;
     }
+
+    public User getUser() { return user; }
 
     public Integer getCapacity() {
         return capacity;

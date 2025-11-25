@@ -20,11 +20,11 @@ public class CookingService {
     }
 
     @Transactional
-    public void runCooking(Integer recipeId) {
+    public void runCooking(Integer recipeId, Integer userId) {
         List<RecipeIngredient> recipeIngredientList = recipeService.findRecipeIngredient(recipeId);
         // 식재료 수량 확인 (부족 시 예외)
-        ingredientService.ensureAllEnough(recipeIngredientList);
-        // 식재료 차감
-        ingredientService.decreaseByRecipe(recipeIngredientList);
+        ingredientService.ensureAllEnough(recipeIngredientList, userId);
+//        // 식재료 차감
+        ingredientService.decreaseByRecipe(recipeIngredientList, userId);
     }
 }

@@ -30,16 +30,13 @@ public class RecipeService {
     }
 
     @Transactional(readOnly = true)
-    public Pot getSinglePotOrNull() {
-        Pot result = potRepository.findFirstByOrderByIdAsc().orElse(null);
-        return result;
+    public Pot getSinglePotOrNull(Integer userId) {
+        return potRepository.findFirstByUserId(userId).orElse(null);
     }
 
     @Transactional
-    public void updatePot(Integer potId, Integer capacity, boolean isCamping, String category) {
-        Pot pot = (potId != null)
-                ? potRepository.findById(potId).orElseThrow(() -> new IllegalArgumentException("Pot not found: " + potId))
-                : potRepository.findFirstByOrderByIdAsc().orElseThrow(() -> new IllegalArgumentException("Pot row not found"));
+    public void updatePot(Integer userId, Integer capacity, boolean isCamping, String category) {
+        Pot pot = potRepository.findFirstByUserId(userId).orElseThrow(() -> new IllegalArgumentException("Pot not found"));
 
         int cap = (capacity == null || capacity < 0) ? 0 : capacity;
         pot.setCapacity(cap);
@@ -48,18 +45,17 @@ public class RecipeService {
     }
 
     @Transactional(readOnly = true)
-    public List<RecipeSheetRow> findRecipeSheet() {
-        List<RecipeSheetRow> result = queryRepository.findRecipeSheet();
-        return result;
+    public List<RecipeSheetRow> findRecipeSheet(Integer userId) {
+        return queryRepository.findRecipeSheet(userId);
     }
 
     @Transactional
-    public int updateFlags(RecipeForm form) {
+    public int updateFlags(RecipeForm form, Integer userId) {
         int changed = 0;
         for (RecipeEditRow row : form.getRows()) {
             boolean isRegistered = row.getIsRegistered();
             boolean isTarget = row.getIsTarget();
-            changed += recipeRepository.updateFlags(row.getId(), isRegistered, isTarget);
+            changed += recipeRepository.updateFlags(row.getId(), isRegistered, isTarget, userId);
         }
         log.info("[RecipeService.updateFlags] {}건 업데이트", changed);
         return changed;

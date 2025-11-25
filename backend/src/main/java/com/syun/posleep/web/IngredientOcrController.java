@@ -1,10 +1,12 @@
 package com.syun.posleep.web;
 
+import com.syun.posleep.security.jwt.CustomUserDetails;
 import com.syun.posleep.service.IngredientOcrService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +26,7 @@ public class IngredientOcrController {
             value = "/ocr",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<?> ocr(@RequestPart("image") @NotNull MultipartFile image) throws  Exception {
+    public ResponseEntity<?> ocr(@RequestPart("image") @NotNull MultipartFile image, @AuthenticationPrincipal CustomUserDetails user) throws  Exception {
         if (image.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -36,7 +38,9 @@ public class IngredientOcrController {
             return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
         }
 
-        svc.processAndApply(image);
+        Integer userId = user.getUserId();
+
+        svc.processAndApply(image, userId);
 
         return ResponseEntity.ok().build();
     }
