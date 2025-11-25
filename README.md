@@ -45,6 +45,7 @@
 |**Backend**        |Language   |<img src="https://img.shields.io/badge/Java 17-007396?logo=CoffeeScript&logoColor=white"/>|
 |                   |Framework  |<img src="https://img.shields.io/badge/SpringBoot 3.5-6DB33F?logo=springboot&logoColor=white"/>|
 |                   |ORM        |<img src="https://img.shields.io/badge/Spring Data JPA-6DB33F?logo=spring&logoColor=white"/>|
+|                   |Authorization        |<img src="https://img.shields.io/badge/Spring Security-6DB33F?logo=springsecurity&logoColor=white"/> <img src="https://img.shields.io/badge/JSON Web Token-181717?logo=jsonwebtokens"/>|
 |**Frontend**       |Language   |<img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white"/>|
 |                   |Framework  |<img src="https://img.shields.io/badge/NextJS 15-E0234E?logo=next.js&logoColor=white"/>|
 |                   |UI         |<img src="https://img.shields.io/badge/React 19-4c768d?logo=react"/> <img src="https://img.shields.io/badge/Tailwind CSS-06B6D4?logo=tailwindcss&logoColor=white"/>|
@@ -60,7 +61,7 @@
 
 #### 2.2.1. System Architecture
 
-<img src=images/system_architecture.png  width="60%"/>
+<img src=images/system_architecture2.png  width="60%"/>
 
 
 #### 2.2.2. CI/CD Pipeline Architecture
@@ -70,7 +71,7 @@
 
 #### 2.2.3. ERD
 
-<img src=images/erd.png  width="50%"/>
+<img src=images/erd2.png  width="60%"/>
 
 
 
@@ -87,10 +88,12 @@
 │     ├─ 🗂️ main/java/com/syun/posleep/
 │     │  ├─ PosleepApplication.java
 │     │  ├─ 🗂️ aspects/                         # 컨트롤러/서비스 공통 로직(AOP)
+│     │  ├─ 🗂️ config/                          # 설정
 │     │  ├─ 🗂️ domain/                          # JPA 엔티티
 │     │  ├─ 🗂️ dto/                             # request/response DTO
 │     │  ├─ 🗂️ query/                           # 조회 전용 Row DTO
 │     │  ├─ 🗂️ repository/                      # JPA 리포지토리, native 쿼리
+│     │  ├─ 🗂️ security/                        # 인증/보안
 │     │  ├─ 🗂️ service/                         # 비즈니스 로직
 │     │  └─ 🗂️ web/                             # REST 컨트롤러
 │     ├─ 🗂️ main/resources/
@@ -136,6 +139,14 @@
 <br>
 
 ### 3.2. Service Examples
+| 🏠 홈 페이지 ( / ) |
+|:-:|
+|<img src=images/result/desktop_login.png  width="80%"/><br>로그인 화면|
+|<img src=images/result/desktop_signup.png  width="80%"/><br>회원가입 화면|
+|<img src=images/result/desktop_home.png  width="80%"/><br>홈 화면|
+
+<br>
+
 |🍎 식재료 화면 (/ingredients)|
 |:-:|
 |<img src=images/result/desktop_ingredients_description.png  width="80%"/><br>Desktop|
