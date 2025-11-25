@@ -3,8 +3,8 @@ package com.syun.posleep.service;
 
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
-import com.syun.posleep.domain.Ingredient;
-import com.syun.posleep.repository.IngredientRepository;
+import com.syun.posleep.domain.UserIngredient;
+import com.syun.posleep.repository.UserIngredientRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,29 +19,27 @@ import java.util.regex.Pattern;
 public class IngredientOcrService {
     private final Pattern COUNT_LINE = Pattern.compile("^[xX]\\s*(\\d{1,3})$");
     private final Pattern KOREAN_NAME = Pattern.compile(".*[가-힣].*");
-    // 시작/종료 앵커
-    private static final String START_ANCHOR = "사탕";
-    private static final String END_ANCHORS = "돌아간다";
+    private final String END_ANCHORS = "돌아간다";
 
+    private final UserIngredientRepository repo;
 
-    private final IngredientRepository repo;
-
-    public IngredientOcrService(IngredientRepository repo) {
+    public IngredientOcrService(UserIngredientRepository repo) {
         this.repo = repo;
     }
 
     @Transactional
-    public void processAndApply(MultipartFile image) throws Exception {
+    public void processAndApply(MultipartFile image, Integer userId) throws Exception {
         String fullText = callVision(image);
 
         Map<String,Integer> ocrResults = parseNameCounts(fullText);
-        List<Ingredient> ingredients = repo.findAll();
+        List<UserIngredient> userIngredients = repo.findByUserId(userId);
 
-        for (Ingredient ing : ingredients) {
-            String name = ing.getName();
-            Integer parsedCount = ocrResults.get(name);
-            if (parsedCount != null) {
-                ing.setQuantity(parsedCount);
+        for (UserIngredient ing : userIngredients) {
+            String name = ing.getIngredient().getName();
+            Integer parseCount = ocrResults.get(name);
+
+            if (parseCount != null) {
+                ing.setQuantity(parseCount);
                 ing.setIsRegistered(true);
             } else {
                 ing.setQuantity(0);
@@ -82,7 +80,7 @@ public class IngredientOcrService {
         List<String> rawLines = Arrays.stream(fullText.split("\\R"))
                 .map(String::trim)
                 .toList();
-        int startIdx = findStartIndex(rawLines, START_ANCHOR);
+        int startIdx = findStartIndex(rawLines);
         int endIdx = findEndIndex(rawLines, startIdx, END_ANCHORS);
 
         List<String> lines = rawLines.subList(startIdx, endIdx);
@@ -106,10 +104,10 @@ public class IngredientOcrService {
         return result;
     }
 
-    private int findStartIndex(List<String> lines, String startAnchor) {
+    private int findStartIndex(List<String> lines) {
         for (int i = 0; i < lines.size(); i++) {
-            if (startAnchor.equals(lines.get(i).trim())) {
-                return Math.min(i + 1, lines.size());
+            if (lines.get(i).trim().charAt(0) == 'x') {
+                return Math.min(i, lines.size());
             }
         }
         return 0;

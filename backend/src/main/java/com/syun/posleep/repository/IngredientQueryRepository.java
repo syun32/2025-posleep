@@ -11,25 +11,28 @@ public interface IngredientQueryRepository extends JpaRepository<Recipe, Integer
 
         @Query(value = """
         SELECT
-            i.id                AS id,
-            i.name              AS name,
-            i.is_registered     AS isRegistered,
-            i.quantity          AS quantity,
+            ui.ingredient_id     AS id,
+            i.name               AS name,
+            ui.is_registered     AS isRegistered,
+            ui.quantity          AS quantity,
             t.sum_quantity      AS target_quantity
-        FROM ingredient i
-        LEFT OUTER JOIN (
-                        SELECT
-                            ri.ingredient_id	as ingredient_id,
-                            SUM(quantity)		as sum_quantity
-                        FROM recipe_ingredient ri
-                        LEFT OUTER JOIN recipe r
-                        ON ri.recipe_id = r.id
-                        WHERE r.is_target
-                            AND r.category = (SELECT category FROM pot WHERE id = 1)
-                        GROUP BY ri.ingredient_id
-                        ) AS t
-        ON i.id = t.ingredient_id
-        ORDER BY i.id
+        FROM user_ingredient ui
+                 LEFT OUTER JOIN (
+                                    SELECT
+                                        ri.ingredient_id	as ingredient_id,
+                                        SUM(quantity)		as sum_quantity
+                                    FROM recipe_ingredient ri
+                                             LEFT OUTER JOIN recipe r
+                                                             ON ri.recipe_id = r.id
+                                    WHERE r.is_target
+                                      AND r.category = (SELECT category FROM pot WHERE id = 1)
+                                    GROUP BY ri.ingredient_id
+                                ) AS t
+                ON ui.id = t.ingredient_id
+                LEFT OUTER JOIN ingredient i
+                ON ui.ingredient_id = i.id
+        WHERE ui.user_id = :userId
+        ORDER BY ui.id
         """, nativeQuery = true)
-        List<IngredientSheetRow> findIngredientSheet();
+        List<IngredientSheetRow> findIngredientSheet(Integer userId);
 }
