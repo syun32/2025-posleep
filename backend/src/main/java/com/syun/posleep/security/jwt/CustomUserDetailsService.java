@@ -4,6 +4,7 @@ import com.syun.posleep.domain.User;
 import com.syun.posleep.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -23,10 +24,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(
                         () -> new UsernameNotFoundException("User not found: " + name)
                 );
-        return new org.springframework.security.core.userdetails.User(
+
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.getRole()));
+
+        return new CustomUserDetails(
+                user.getId(),
                 user.getName(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority(user.getRole()))
+                authorities
         );
     }
 }
