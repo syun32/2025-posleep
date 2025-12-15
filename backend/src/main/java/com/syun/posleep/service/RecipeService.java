@@ -53,9 +53,10 @@ public class RecipeService {
     public int updateFlags(RecipeForm form, Integer userId) {
         int changed = 0;
         for (RecipeEditRow row : form.getRows()) {
+            int recipeId = row.getId();
             boolean isRegistered = row.getIsRegistered();
             boolean isTarget = row.getIsTarget();
-            changed += recipeRepository.updateFlags(row.getId(), isRegistered, isTarget, userId);
+            changed += recipeRepository.updateFlags(recipeId, isRegistered, isTarget, userId);
         }
         log.info("[RecipeService.updateFlags] {}건 업데이트", changed);
         return changed;

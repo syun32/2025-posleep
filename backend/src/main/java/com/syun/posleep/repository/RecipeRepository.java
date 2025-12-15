@@ -14,11 +14,11 @@ public interface RecipeRepository extends CrudRepository<Recipe, Integer> {
             UPDATE user_recipe
             SET is_registered = :isRegistered,
                 is_target = :isTarget
-            WHERE id = :id
+            WHERE recipe_id = :recipeId
                 AND (is_registered <> :isRegistered OR is_target <> :isTarget)
                 AND user_id = :userId
     """, nativeQuery = true)
-    int updateFlags(@Param("id") Integer id,
+    int updateFlags(@Param("recipeId") Integer recipeId,
                     @Param("isRegistered") boolean isRegistered,
                     @Param("isTarget") boolean isTarget,
                     @Param("userId") Integer userId);
